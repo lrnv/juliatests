@@ -4,8 +4,15 @@ using MultiFloats
 setprecision(256)
 
 
-DoubleType = Float64x5
-ArbType = Float64x8
+DoubleType = Float64x2
+ArbType = BigFloat
+
+Base.rand(::Type{MultiFloat{Float64,2}}) = MultiFloat{Float64,2}(rand(Float64))
+function Base.:^(x::MultiFloat{Float64,2}, y::MultiFloat{Float64,2}) 
+    return MultiFloat{Float64,2}(BigFloat(x)^BigFloat(y))
+end
+Base.round(x::MultiFloat{Float64,2}, y::RoundingMode{:Up}) = round(BigFloat(x),y)
+
 
 dist_name = "Clayton(7)_Par(1,1)_LN(0,0.83)"
 N = 100000
@@ -19,23 +26,12 @@ n_gammas = 20
 Random.seed!(123)
 sample = DatagenCopulaBased.simulate_copula(N,DatagenCopulaBased.Clayton_cop(2,7.0))
 marginals = [Distributions.Pareto(1,1), Distributions.LogNormal(0,0.83)]
-for i in size(sample,2)
+for i in 1:size(sample,2)
     sample[:,i] = Distributions.quantile.(marginals[i],sample[:,i])
 end
 sample = DoubleType.(transpose(sample))
 
 E = DoubleType.(ThorinDistributions.empirical_coefs(ArbType.(sample),m))
-
-
-
-
-# Define MF random sampler, as it does not exist yet.
-
-function Base.rand(::Type{MultiFloat{Float64,5}})
-    MultiFloat{Float64,5}(rand(Float64))
-end
-
-
 
 
 
@@ -69,13 +65,10 @@ opt2 = Optim.Options(g_tol=tol,
                 show_trace = true,
                 allow_f_increases = true,
                 iterations = 10000000)
-algo2 = Optim.LBFGS()
+algo2 = Optim.BFGS()
 program2 = Optim.optimize(obj, par, algo2, opt2)
 print(program2)
 par = Optim.minimizer(program2)
-
-# Back to float
-par = DoubleType.(par)
 
 # Extracting the solution for a plot
 alpha = par[1:n_gammas] .^2 #make them positives
@@ -85,8 +78,7 @@ rez = rez[sortperm(-rez[:,1]),:]
 display(rez)
 
 coefs = ThorinDistributions.get_coefficients(alpha,rates,m)
-E = DoubleType.(E)
-x = y = 0:0.5:10
+x = y = ArbType.(0:0.5:10)
 true_density = (x,y) -> Distributions.pdf(dist,[x,y])
 
 tpl = (2, n_gammas)
