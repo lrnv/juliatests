@@ -17,8 +17,8 @@ Base.round(x::MultiFloat{Float64,2}, y::RoundingMode{:Up}) = round(BigFloat(x),y
 dist_name = "Clayton(7)_Par(1,1)_LN(0,0.83)"
 N = 100000
 m = (40,40)
-Time_ps = 3600
-Time_lbfgs = 3600
+Time_ps = 7200
+Time_lbfgs = 7200
 model_name = "N$(N)_m$(m)_Tpso$(Time_ps)_Tpolish$(Time_lbfgs)"
 n_gammas = 20
 

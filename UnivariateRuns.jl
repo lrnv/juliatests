@@ -1,9 +1,8 @@
 using ThorinDistributions, DoubleFloats, HypothesisTests, MultiFloats
 import Optim, Plots, Random, Distributions, KernelDensity, Serialization, StatsPlots
 
-
-DoubleType = Double64
 setprecision(256)
+DoubleType = BigFloat
 ArbType = BigFloat
 
 
@@ -98,7 +97,8 @@ function Experiment(;N = 100000,dist_name,dist,Time_ps = 300,Time_lbfgs = 300,m,
     println("Computing KS...")
     Threads.@threads for i in 1:N_ks_tests
         Random.rand!(moschdist,new_samples[i])
-        p_values[i] = pvalue(ApproximateTwoSampleKSTest(vec(sample),vec(new_samples[i])))
+        p_values[i] = pvalue(ExactOneSampleKSTest(vec(new_samples[i]),dist))
+        #p_values[i] = pvalue(ApproximateTwoSampleKSTest(vec(sample),vec(new_samples[i])))
         print("KS : $i","\n")
     end
 
