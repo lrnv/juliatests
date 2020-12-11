@@ -27,7 +27,6 @@ function PreComp(m)
     for i in 1:m, j in 1:m
         BINS[j,i] = binomial(i-1,j-1)
         LAGUERRE[j,i] = BINS[j,i]/FACTS[j]*(-big(2))^(j-1)
-        LAGUERRE_VAR[j,i] = BINS[j,i]*(-big(2))^(j-1)
     end
     BINS = ArbT.(BINS)
     LAGUERRE = ArbT.(LAGUERRE)
@@ -152,7 +151,6 @@ function build_coefficients!(coefs,α,θ,cst1,m::NTuple{2, T}) where T <: Int
     I = CartesianIndices(coefs)
     θ ./= (cst1 .+ sum(θ,dims=2))
     S_pow = [s^k for k in (0:Base.maximum(m)), s in θ]
-
     # reduce the number of multiplications : 
     for i in 1:size(α,1)
         S_pow[:,i,:] .*= sqrt(α[i])
@@ -164,14 +162,10 @@ function build_coefficients!(coefs,α,θ,cst1,m::NTuple{2, T}) where T <: Int
     coefs[1] = μ[1]
 
     @inbounds for k in I[2:length(I)]
-        # Indices and organisation
         degree = k[1]!=1 ? 1 : 2
-
         κ[k] = sum(S_pow[k[1],:,1] .* S_pow[k[2],:,2]) * P.FACTS[sum(Tuple(k))-d]
-        #κ[k] = sum(S_pow[k[1],:,1] .* S_pow[k[2],:,2]) * P.FACTS[sum(Tuple(k))-d] / P.FACTS[k[1]] / P.FACTS[k[2]]
         for j in CartesianIndices(k)
             if j[degree] < k[degree]
-                #μ[k] += μ[j] * κ[k - j + I[1]] * (k[degree] - j[degree] +1)
                 μ[k] += μ[j] * κ[k - j + I[1]] *  P.BINS[j[1],k[1]-Int(1==degree)] * P.BINS[j[2],k[2]-Int(2==degree)]
             end
             coefs[k] += μ[j] * P.LAGUERRE[j[1], k[1]] * P.LAGUERRE[j[2], k[2]]
@@ -185,7 +179,7 @@ end
 # Some benchmarks :
 
 
-# using BenchmarkTools
+using BenchmarkTools
 # println("1D test")
 # alpha = [10, 10, 10]
 # scales = [0.5; 0; 1]
@@ -200,7 +194,7 @@ scales = [0.5 0.1; 0.1 0.5]
 alpha = Double64.(alpha)
 scales = Double64.(scales)
 m = (25,25)
-# @btime coefs2 = get_coefficients(alpha, scales,m)
+@btime coefs2 = get_coefficients($alpha, $scales,$m)
 coefs2 = get_coefficients(alpha, scales,m);
 #display(coefs2)
 
