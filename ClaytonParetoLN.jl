@@ -111,6 +111,20 @@ p2 = marginalkde(log_simu[1,1:N_plot],log_simu[2,1:N_plot]; levels=100)
 #p2 = scatter(log_simu[1,1:N_plot],log_simu[2,1:N_plot])
 p = plot(p1,p2,layout=(1,2),size=[1920,1024],link=:both)
 
+p3 = marginalkde(sample[1,1:N_plot],sample[2,1:N_plot];levels=100)
+p4 = marginalkde(simu_sample[1,1:N_plot],simu_sample[2,1:N_plot]; levels=100)
+# p1 = scatter(sample[1,1:N_plot],sample[2,1:N_plot])
+# p2 = scatter(simu_sample[1,1:N_plot],simu_sample[2,1:N_plot])
+# p = plot(p1,p2,layout=(1,2),size=[1920,1024])
+
+#p1 = scatter(log_sample[1,1:N_plot],log_sample[2,1:N_plot])
+#p2 = scatter(log_simu[1,1:N_plot],log_simu[2,1:N_plot])
+pp = plot(p3,p4,layout=(1,2),size=[1920,1024],link=:both)
+
+p5 = scatter(log_sample[1,1:N_plot],log_sample[2,1:N_plot])
+p6 = scatter(log_simu[1,1:N_plot],log_simu[2,1:N_plot])
+ppp = plot(p5,p6,layout=(1,2),size=[1920,1024],link=:both)
+
 
 # p1 = Plots.plot(x, y, fE, legend=false, title = "Projection on L_$m", seriestype=:wireframe)
 # #p2 = Plots.plot(x, y, g, legend=false, title = "Estimation in G_$tpl", seriestype=:wireframe)
@@ -121,6 +135,8 @@ p = plot(p1,p2,layout=(1,2),size=[1920,1024],link=:both)
 if !isdir(dist_name)
     mkdir(dist_name)
 end
+Plots.savefig(ppp,"$dist_name/$(model_name)_3.pdf")
+Plots.savefig(pp,"$dist_name/$(model_name).pdf")
 Plots.savefig(p,"$dist_name/$(model_name)_2.pdf")
 Serialization.serialize("$dist_name/$model_name.model",(alpha,scales))
 
