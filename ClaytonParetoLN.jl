@@ -109,7 +109,7 @@ using Plots, StatsPlots, KernelDensity
 
 p1 = scatter(log_sample[1,1:N_plot],log_sample[2,1:N_plot])
 p2 = scatter(log_simu[1,1:N_plot],log_simu[2,1:N_plot])
-p = plot(p1,p2,layout=(1,2),size=[1920,1024])
+p = plot(p1,p2,layout=(1,2),size=[1920,1024],link=:both)
 
 
 # p1 = Plots.plot(x, y, fE, legend=false, title = "Projection on L_$m", seriestype=:wireframe)
@@ -123,3 +123,5 @@ if !isdir(dist_name)
 end
 Plots.savefig(p,"$dist_name/$(model_name).pdf")
 Serialization.serialize("$dist_name/$model_name.model",(alpha,scales))
+
+
