@@ -101,14 +101,14 @@ log_sample = log.(sample)
 log_simu = log.(simu_sample)
 
 using Plots, StatsPlots, KernelDensity
-# p1 = marginalkde(sample[1,1:N_plot],sample[2,1:N_plot];levels=100)
-# p2 = marginalkde(simu_sample[1,1:N_plot],simu_sample[2,1:N_plot]; levels=100)
+p1 = marginalkde(log_sample[1,1:N_plot],log_sample[2,1:N_plot];levels=100)
+p2 = marginalkde(log_simu[1,1:N_plot],log_simu[2,1:N_plot]; levels=100)
 # p1 = scatter(sample[1,1:N_plot],sample[2,1:N_plot])
 # p2 = scatter(simu_sample[1,1:N_plot],simu_sample[2,1:N_plot])
 # p = plot(p1,p2,layout=(1,2),size=[1920,1024])
 
-p1 = scatter(log_sample[1,1:N_plot],log_sample[2,1:N_plot])
-p2 = scatter(log_simu[1,1:N_plot],log_simu[2,1:N_plot])
+#p1 = scatter(log_sample[1,1:N_plot],log_sample[2,1:N_plot])
+#p2 = scatter(log_simu[1,1:N_plot],log_simu[2,1:N_plot])
 p = plot(p1,p2,layout=(1,2),size=[1920,1024],link=:both)
 
 
@@ -121,7 +121,8 @@ p = plot(p1,p2,layout=(1,2),size=[1920,1024],link=:both)
 if !isdir(dist_name)
     mkdir(dist_name)
 end
-Plots.savefig(p,"$dist_name/$(model_name).pdf")
+Plots.savefig(p,"$dist_name/$(model_name)_2.pdf")
 Serialization.serialize("$dist_name/$model_name.model",(alpha,scales))
+
 
 
