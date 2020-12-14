@@ -1,7 +1,7 @@
 using ThorinDistributions, DoubleFloats, HypothesisTests, MultiFloats
 import Optim, Plots, Random, Distributions, KernelDensity, Serialization, StatsPlots
 
-setprecision(256)
+setprecision(512)
 DoubleType = BigFloat
 ArbType = BigFloat
 
@@ -88,7 +88,7 @@ function Experiment(;N = 100000,dist_name,dist,Time_ps = 300,Time_lbfgs = 300,m,
                    #mosh)
     x = Float64.(x)
     # Let's do some KS testing : 
-    new_sample = deepcopy(sample)
+    new_sample = sample = Array{BigFloat}(undef, 1,Int(N//10))
     Random.rand!(moschdist,new_sample)
     new_samples = [new_sample for i in 1:N_ks_tests]
 
@@ -97,8 +97,7 @@ function Experiment(;N = 100000,dist_name,dist,Time_ps = 300,Time_lbfgs = 300,m,
     println("Computing KS...")
     Threads.@threads for i in 1:N_ks_tests
         Random.rand!(moschdist,new_samples[i])
-        p_values[i] = pvalue(ExactOneSampleKSTest(vec(new_samples[i]),dist))
-        #p_values[i] = pvalue(ApproximateTwoSampleKSTest(vec(sample),vec(new_samples[i])))
+        p_values[i] = pvalue(ExactOneSampleKSTest(vec(new_samples[i]) .+ shift,dist))
         print("KS : $i","\n")
     end
 
@@ -128,7 +127,7 @@ function Experiment(;N = 100000,dist_name,dist,Time_ps = 300,Time_lbfgs = 300,m,
 
     new_sample = deepcopy(sample)
     Random.rand!(moschdist,new_sample)
-    p2 = StatsPlots.qqplot(Float64.(vec(log.(sample))[1:Int(N//100)]), Float64.(vec(log.(new_sample))[1:Int(N//100)]), qqline = :fit, title="Empirical QQplot")
+    p2 = StatsPlots.qqplot(Float64.(vec(log.(sample))), Float64.(vec(log.(new_sample))), qqline = :fit, title="Empirical QQplot")
 
     p3 = StatsPlots.ea_histogram(p_values,bins=25,legend=nothing,title="KS test: histogram of p-values of $(N_ks_tests) resamples", yaxis=nothing)
                             

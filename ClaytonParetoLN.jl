@@ -1,10 +1,10 @@
 import Random, DatagenCopulaBased, Distributions, ThorinDistributions, Optim, Plots
 import Serialization
 using MultiFloats
-setprecision(512)
+setprecision(256)
 
 
-DoubleType = Float64x5
+DoubleType = BigFloat
 ArbType = BigFloat
 
 Base.rand(::Type{MultiFloat{Float64,5}}) = MultiFloat{Float64,5}(rand(Float64))
@@ -15,15 +15,15 @@ Base.round(x::MultiFloat{Float64,5}, y::RoundingMode{:Up}) = MultiFloat{Float64,
 
 dist_name = "Clayton(7)_Par(1,1)_LN(0,0.83)"
 N = 100000
-m = (40,40)
-Time_ps = 7200
-Time_lbfgs = 7200
+m = (10,10)
+Time_ps = 3600
+Time_lbfgs = 1800
 model_name = "N$(N)_m$(m)_Tpso$(Time_ps)_Tpolish$(Time_lbfgs)"
-n_gammas = 20
+n_gammas = 10
 
 # Simulate the dataset : 
 Random.seed!(123)
-sample = DatagenCopulaBased.simulate_copula(N,DatagenCopulaBased.Clayton_cop(2,7.0))
+sample = 1 .- DatagenCopulaBased.simulate_copula(N,DatagenCopulaBased.Clayton_cop(2,7.0))
 marginals = [Distributions.Pareto(2.5,1), Distributions.LogNormal(0,0.83)]
 shifts = [1,0]
 for i in 1:size(sample,2)
@@ -52,10 +52,12 @@ print(program)
 par = Optim.minimizer(program)
 
 # Switch to ArbType for the precision run : 
-par = ArbType.(par)
-tol = ArbType.(tol)
-sample = ArbType.(sample)
-E = ThorinDistributions.empirical_coefs(sample,m)
+if ArbType != DoubleType
+    par = ArbType.(par)
+    tol = ArbType.(tol)
+    sample = ArbType.(sample)
+    E = ThorinDistributions.empirical_coefs(sample,m)
+end
 
 println("Polishing with LBFGS...")
 opt2 = Optim.Options(g_tol=tol,
@@ -95,11 +97,19 @@ simu_sample = Float64.(simu_sample)
 sample = Float64.(sample)
 N_plot = N
 
-using Plots, StatsPlots, KernelDensity
-p1 = marginalkde(sample[1,1:N_plot],sample[2,1:N_plot];levels=100)
-p2 = marginalkde(simu_sample[1,1:N_plot],simu_sample[2,1:N_plot]; levels=100)
-p = plot(p1,p2,layout=(1,2),size=[1920,1024])
+log_sample = log.(sample)
+log_simu = log.(simu_sample)
 
+using Plots, StatsPlots, KernelDensity
+# p1 = marginalkde(sample[1,1:N_plot],sample[2,1:N_plot];levels=100)
+# p2 = marginalkde(simu_sample[1,1:N_plot],simu_sample[2,1:N_plot]; levels=100)
+# p1 = scatter(sample[1,1:N_plot],sample[2,1:N_plot])
+# p2 = scatter(simu_sample[1,1:N_plot],simu_sample[2,1:N_plot])
+# p = plot(p1,p2,layout=(1,2),size=[1920,1024])
+
+p1 = scatter(log_sample[1,1:N_plot],log_sample[2,1:N_plot])
+p2 = scatter(log_simu[1,1:N_plot],log_simu[2,1:N_plot])
+p = plot(p1,p2,layout=(1,2),size=[1920,1024])
 
 
 # p1 = Plots.plot(x, y, fE, legend=false, title = "Projection on L_$m", seriestype=:wireframe)
@@ -111,5 +121,5 @@ p = plot(p1,p2,layout=(1,2),size=[1920,1024])
 if !isdir(dist_name)
     mkdir(dist_name)
 end
-Plots.savefig(p,"$dist_name/$model_name.pdf")
+Plots.savefig(p,"$dist_name/$(model_name).pdf")
 Serialization.serialize("$dist_name/$model_name.model",(alpha,scales))
