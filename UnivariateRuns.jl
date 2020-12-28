@@ -6,7 +6,7 @@ DoubleType = BigFloat
 ArbType = BigFloat
 
 
-function Experiment(;N = 100000,dist_name,dist,Time_ps = 300,Time_lbfgs = 300,m,n_gammas,seed = 123, N_ks_tests = 100, shift = 0)
+function Experiment(;N = 100000,dist_name,dist,Time_ps = 600,Time_lbfgs = 600,m,n_gammas,seed = 123, N_ks_tests = 250, shift = 0)
 
     Total_time = Int(floor(Time_lbfgs+Time_ps))
 
@@ -119,7 +119,8 @@ function Experiment(;N = 100000,dist_name,dist,Time_ps = 300,Time_lbfgs = 300,m,
                             markeralpha=0,
                             annotations=(2,
                                          y[2],
-                                         Plots.text("Univariate $dist_name, $N samples, $n_gammas gammas, m = $(m[1]), $(Total_time) seconds")),
+                                         Plots.text("Univariate $dist_name, $N samples, $n_gammas gammas, m = $(m[1])")),
+                                         #Plots.text("Univariate $dist_name, $N samples, $n_gammas gammas, m = $(m[1]), $(Total_time) seconds")),
                             axis=nothing,
                             legend=false,
                             border=:none,
@@ -129,7 +130,7 @@ function Experiment(;N = 100000,dist_name,dist,Time_ps = 300,Time_lbfgs = 300,m,
     Random.rand!(moschdist,new_sample)
     p2 = StatsPlots.qqplot(Float64.(vec(log.(sample))), Float64.(vec(log.(new_sample))), qqline = :fit, title="Empirical QQplot")
 
-    p3 = StatsPlots.ea_histogram(p_values,bins=25,legend=nothing,title="KS test: histogram of p-values of $(N_ks_tests) resamples", yaxis=nothing)
+    p3 = StatsPlots.histogram(p_values,bins=20,legend=nothing,title="KS test: histogram of p-values of $(N_ks_tests) resamples", yaxis=nothing)
                             
 
     p = Plots.plot(
