@@ -1,5 +1,6 @@
 [deps]
 ApproxFun = "28f2ccd6-bb30-5033-b560-165f7b14dc2f"
+AverageShiftedHistograms = "77b51b56-6f8f-5c3a-9cb4-d71f9594ea6e"
 Calculus = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
 DoubleFloats = "497a8b3b-efae-58df-a0af-a86822472b78"
 DynamicGrids = "a5dba43e-3abc-5203-bfc5-584ca68d3f5b"
