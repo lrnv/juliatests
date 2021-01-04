@@ -1,6 +1,5 @@
 using TaylorSeries
 
-
 n = 10
 d = 2
 m = (10,10)
@@ -13,6 +12,7 @@ t = x[(n*(d+1)+1+d):end]
 θ = reshape(θ,(n,d))
 
 kappa = -sum(α[i] * log(1 + sum(θ[i,:].*t)) for i in 1:n)
+
 
 
 mu = exp(kappa)

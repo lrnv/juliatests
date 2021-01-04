@@ -57,6 +57,7 @@ function MultivariateTest(;N=100000,dist_name,Time_ps=7200,Time_lbfgs=7200,n_gam
     print(program2)
     par = Optim.minimizer(program2)
 
+    
     # Extracting the solution for a plot
     alpha = par[1:n_gammas] .^2 #make them positives
     scales = reshape(par[(n_gammas+1):3n_gammas],(n_gammas,2)) .^ 2 # make them positives
