@@ -6,7 +6,7 @@ DoubleType = BigFloat
 ArbType = BigFloat
 
 
-function Experiment(;N = 100000,dist_name,dist,Time_ps = 600,Time_lbfgs = 600,m,n_gammas,seed = 123, N_ks_tests = 250, shift = 0)
+function UnivExperiment(;N = 100000,dist_name,dist,Time_ps = 600,Time_lbfgs = 600,m,n_gammas,seed = 123, N_ks_tests = 250, shift = 0)
 
     Total_time = Int(floor(Time_lbfgs+Time_ps))
 
@@ -152,29 +152,42 @@ function Experiment(;N = 100000,dist_name,dist,Time_ps = 600,Time_lbfgs = 600,m,
     return p_values
 end
 
-Experiment(; dist_name = "Weibull(1.5,1)", dist = Distributions.Weibull(3/2,1), m = (5,), n_gammas = 2)
-Experiment(; dist_name = "Weibull(0.75,1)", dist = Distributions.Weibull(3/4,1), m = (5,), n_gammas = 2)
+# Distributions: 
+Weib15 = Distributions.Weibull(3/2,1)
+Weib75 = Distributions.Weibull(3/4,1)
+Pa05 = Distributions.Pareto(0.5,1)
+Pa10 = Distributions.Pareto(1.0,1)
+Pa15 = Distributions.Pareto(1.5,1)
+Pa25 = Distributions.Pareto(2.5,1)
+Ln = Distributions.LogNormal(0,0.83)
 
-Experiment(; dist_name = "LogNormal(0,0.83)", dist = Distributions.LogNormal(0,0.83), m = (21,), n_gammas = 10)
-Experiment(; dist_name = "Pareto(2.5,1)", dist = Distributions.Pareto(2.5,1), m = (21,), n_gammas = 10, shift = 1)
-Experiment(; dist_name = "Pareto(1.5,1)", dist = Distributions.Pareto(1.5,1), m = (21,), n_gammas = 10, shift = 1)
-Experiment(; dist_name = "Pareto(1,1)",   dist = Distributions.Pareto(1.0,1), m = (21,), n_gammas = 10, shift = 1)
-Experiment(; dist_name = "Pareto(0.5,1)", dist = Distributions.Pareto(0.5,1), m = (21,), n_gammas = 10, shift = 1)
-Experiment(; dist_name = "Weibull(1.5,1)", dist = Distributions.Weibull(3/2,1), m = (21,), n_gammas = 10)
-Experiment(; dist_name = "Weibull(0.75,1)", dist = Distributions.Weibull(3/4,1), m = (21,), n_gammas = 10)
 
-Experiment(; dist_name = "LogNormal(0,0.83)", dist = Distributions.LogNormal(0,0.83), m = (41,), n_gammas = 20)
-Experiment(; dist_name = "Pareto(2.5,1)", dist = Distributions.Pareto(2.5,1), m = (41,), n_gammas = 20, shift = 1)
-Experiment(; dist_name = "Pareto(1.5,1)", dist = Distributions.Pareto(1.5,1), m = (41,), n_gammas = 20, shift = 1)
-Experiment(; dist_name = "Pareto(1,1)",   dist = Distributions.Pareto(1.0,1), m = (41,), n_gammas = 20, shift = 1)
-Experiment(; dist_name = "Pareto(0.5,1)", dist = Distributions.Pareto(0.5,1), m = (41,), n_gammas = 20, shift = 1)
-Experiment(; dist_name = "Weibull(1.5,1)", dist = Distributions.Weibull(3/2,1), m = (41,), n_gammas = 20)
-Experiment(; dist_name = "Weibull(0.75,1)", dist = Distributions.Weibull(3/4,1), m = (41,), n_gammas = 20)
+UnivExperiment(; dist_name = "LogNormal(0,0.83)", dist = Ln, m = (21,), n_gammas = 10)
+UnivExperiment(; dist_name = "LogNormal(0,0.83)", dist = Ln, m = (41,), n_gammas = 20)
+UnivExperiment(; dist_name = "LogNormal(0,0.83)", dist = Ln, m = (81,), n_gammas = 40)
 
-Experiment(; dist_name = "LogNormal(0,0.83)", dist = Distributions.LogNormal(0,0.83), m = (81,), n_gammas = 40)
-Experiment(; dist_name = "Pareto(2.5,1)", dist = Distributions.Pareto(2.5,1), m = (81,), n_gammas = 40, shift = 1)
-Experiment(; dist_name = "Pareto(1.5,1)", dist = Distributions.Pareto(1.5,1), m = (81,), n_gammas = 40, shift = 1)
-Experiment(; dist_name = "Pareto(1,1)",   dist = Distributions.Pareto(1.0,1), m = (81,), n_gammas = 40, shift = 1)
-Experiment(; dist_name = "Pareto(0.5,1)", dist = Distributions.Pareto(0.5,1), m = (81,), n_gammas = 40, shift = 1)
-Experiment(; dist_name = "Weibull(1.5,1)", dist = Distributions.Weibull(3/2,1), m = (81,), n_gammas = 40)
-Experiment(; dist_name = "Weibull(0.75,1)", dist = Distributions.Weibull(3/4,1), m = (81,), n_gammas = 40)
+UnivExperiment(; dist_name = "Weibull(1.5,1)", dist = Weib15, m = (5,), n_gammas = 2)
+UnivExperiment(; dist_name = "Weibull(1.5,1)", dist = Weib15), m = (21,), n_gammas = 10)
+UnivExperiment(; dist_name = "Weibull(1.5,1)", dist = Weib15, m = (41,), n_gammas = 20)
+UnivExperiment(; dist_name = "Weibull(1.5,1)", dist = Weib15), m = (81,), n_gammas = 40)
+
+UnivExperiment(; dist_name = "Weibull(0.75,1)", dist = Weib75, m = (5,), n_gammas = 2)
+UnivExperiment(; dist_name = "Weibull(0.75,1)", dist = , m = (21,), n_gammas = 10)
+UnivExperiment(; dist_name = "Weibull(0.75,1)", dist = Weib75, m = (41,), n_gammas = 20)
+UnivExperiment(; dist_name = "Weibull(0.75,1)", dist = Weib75, m = (81,), n_gammas = 40)
+
+UnivExperiment(; dist_name = "Pareto(0.5,1)", dist = Pa05, m = (21,), n_gammas = 10, shift = 1)
+UnivExperiment(; dist_name = "Pareto(0.5,1)", dist = Pa05, m = (41,), n_gammas = 20, shift = 1)
+UnivExperiment(; dist_name = "Pareto(0.5,1)", dist = Pa05, m = (81,), n_gammas = 40, shift = 1)
+
+UnivExperiment(; dist_name = "Pareto(1,1)",   dist = Pa10, m = (21,), n_gammas = 10, shift = 1)
+UnivExperiment(; dist_name = "Pareto(1,1)",   dist = Pa10, m = (41,), n_gammas = 20, shift = 1)
+UnivExperiment(; dist_name = "Pareto(1,1)",   dist = Pa10, m = (81,), n_gammas = 40, shift = 1)
+
+UnivExperiment(; dist_name = "Pareto(1.5,1)", dist = Pa15, m = (21,), n_gammas = 10, shift = 1)
+UnivExperiment(; dist_name = "Pareto(1.5,1)", dist = Pa15, m = (41,), n_gammas = 20, shift = 1)
+UnivExperiment(; dist_name = "Pareto(1.5,1)", dist = Pa15, m = (81,), n_gammas = 40, shift = 1)
+
+UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (21,), n_gammas = 10, shift = 1)
+UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (41,), n_gammas = 20, shift = 1)
+UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (81,), n_gammas = 40, shift = 1)
