@@ -5,7 +5,7 @@ setprecision(512)
 DoubleType = BigFloat
 ArbType = BigFloat
 
-function MultivExperiment(;N=10000,dist_name,Time_ps=10,Time_lbfgs=10,n_gammas,m,copula,marginals, shifts, m_plot=(20,20), with_regul = true)
+function MultivExperiment(;N=100000,dist_name,Time_ps=3600,Time_lbfgs=3600,n_gammas,m,copula,marginals, shifts, m_plot=(20,20), with_regul = false)
 
     model_name = "N$(N)_m$(m)_n$(n_gammas)_Tpso$(Time_ps)_Tpolish$(Time_lbfgs)"
     
@@ -121,7 +121,6 @@ function MultivExperiment(;N=10000,dist_name,Time_ps=10,Time_lbfgs=10,n_gammas,m
 
 end
 
-
 # Copulas
 clayton7 = DatagenCopulaBased.Clayton_cop(2,7.0)
 gauss05 = DatagenCopulaBased.Gaussian_cop([1. 0.5; 0.5 1.])
@@ -132,7 +131,7 @@ Ln01 = Distributions.LogNormal(0,1)
 Pa25 = Distributions.Pareto(2.5,1)
 Pa1 = Distributions.Pareto(1,1)
 
-MultivExperiment(;dist_name="Clayton(7)_Par(1,1)_LN(0,0.83)_junk",n_gammas=10,m=(10,10),copula=clayton7,marginals=[Pa1, Ln083], shifts=[1,0])
+MultivExperiment(;dist_name="Clayton(7)_Par(1,1)_LN(0,0.83)",n_gammas=10,m=(10,10),copula=clayton7,marginals=[Pa1, Ln083], shifts=[1,0])
 MultivExperiment(;dist_name="Clayton(7)_Par(1,1)_LN(0,0.83)",n_gammas=20,m=(10,10),copula=clayton7,marginals=[Pa1, Ln083], shifts=[1,0])
 MultivExperiment(;dist_name="Clayton(7)_Par(1,1)_LN(0,0.83)",n_gammas=20,m=(20,20),copula=clayton7,marginals=[Pa1, Ln083], shifts=[1,0])
 
