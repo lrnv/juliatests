@@ -1,4 +1,4 @@
-using ThorinDistributions, DoubleFloats, HypothesisTests, MultiFloats
+using ThorinDistributions, HypothesisTests
 import Optim, Plots, Random, Distributions, KernelDensity, Serialization, StatsPlots
 
 setprecision(512)

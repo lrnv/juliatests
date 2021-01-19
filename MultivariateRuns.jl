@@ -5,9 +5,9 @@ setprecision(512)
 DoubleType = BigFloat
 ArbType = BigFloat
 
-function MultivariateTest(;N=100000,dist_name,Time_ps=7200,Time_lbfgs=7200,n_gammas,m,copula,marginals, shifts, m_plot=(50,50))
+function MultivariateTest(;N=10000,dist_name,Time_ps=10,Time_lbfgs=10,n_gammas,m,copula,marginals, shifts, m_plot=(20,20), with_regul = true)
 
-    model_name = "N$(N)_m$(m)_Tpso$(Time_ps)_Tpolish$(Time_lbfgs)"
+    model_name = "N$(N)_m$(m)_n$(n_gammas)_Tpso$(Time_ps)_Tpolish$(Time_lbfgs)"
     
     # Simulate the dataset : 
     Random.seed!(123)
@@ -21,9 +21,16 @@ function MultivariateTest(;N=100000,dist_name,Time_ps=7200,Time_lbfgs=7200,n_gam
     E = DoubleType.(ThorinDistributions.empirical_coefs(ArbType.(sample),m))
 
     println("Launching ParticleSwarm...")
-    par = DoubleType.((Random.rand(3n_gammas) .- 1/2))
+
+    n_par = with_regul ? 3n_gammas+1 : 3n_gammas
+
+    par = DoubleType.((Random.rand(n_par) .- 1/2))
     tol = DoubleType(0.1)^(22)
-    obj = x -> ThorinDistributions.L2Objective(x,E)
+    if with_regul
+        obj = x -> ThorinDistributions.L2ObjectiveWithPenalty(x,E)
+    else
+        obj = x -> ThorinDistributions.L2Objective(x,E)
+    end
     opt = Optim.Options(g_tol=tol,
                     x_tol=tol,
                     f_tol=tol,
@@ -123,7 +130,7 @@ Ln01 = Distributions.LogNormal(0,1)
 Pa25 = Distributions.Pareto(2.5,1)
 Pa1 = Distributions.Pareto(1,1)
 
-MultivariateTest(;dist_name="Clayton(7)_Par(1,1)_LN(0,0.83)",n_gammas=10,m=(10,10),copula=clayton7,marginals=[Pa1, Ln083], shifts=[1,0])
+MultivariateTest(;dist_name="Clayton(7)_Par(1,1)_LN(0,0.83)_junk",n_gammas=10,m=(10,10),copula=clayton7,marginals=[Pa1, Ln083], shifts=[1,0])
 MultivariateTest(;dist_name="Clayton(7)_Par(1,1)_LN(0,0.83)",n_gammas=20,m=(10,10),copula=clayton7,marginals=[Pa1, Ln083], shifts=[1,0])
 MultivariateTest(;dist_name="Clayton(7)_Par(1,1)_LN(0,0.83)",n_gammas=20,m=(20,20),copula=clayton7,marginals=[Pa1, Ln083], shifts=[1,0])
 
@@ -134,8 +141,4 @@ MultivariateTest(;dist_name="Clayton(7)_Par(2.5,1)_LN(0,0.83)",n_gammas=20,m=(20
 MultivariateTest(;dist_name="MLN(0.5)_LN(0,1)_LN(0,1)",n_gammas=10,m=(10,10),copula=gauss05,marginals=[Ln01,Ln01], shifts=[0,0])
 MultivariateTest(;dist_name="MLN(0.5)_LN(0,1)_LN(0,1)",n_gammas=20,m=(20,20),copula=gauss05,marginals=[Ln01,Ln01], shifts=[0,0])
 MultivariateTest(;dist_name="MLN(0.5)_LN(0,1)_LN(0,1)",n_gammas=20,m=(20,20),copula=gauss05,marginals=[Ln01,Ln01], shifts=[0,0])
-
-
-
-
 
