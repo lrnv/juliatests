@@ -1,11 +1,11 @@
 import Random, DatagenCopulaBased, Distributions, ThorinDistributions, Optim, Plots
 import Serialization
-using Plots, StatsPlots, KernelDensity
+using Plots, StatsPlots, KernelDensity, StatsBase
 setprecision(512)
 DoubleType = BigFloat
 ArbType = BigFloat
 
-function MultivExperiment(;N=100000,dist_name,Time_ps=3600,Time_lbfgs=3600,n_gammas,m,copula,marginals, shifts, m_plot=(20,20), with_regul = false)
+function MultivExperiment(;N=100000,dist_name,Time_ps=7200,Time_lbfgs=7200,n_gammas,m,copula,marginals, shifts, m_plot=(20,20), with_regul = false)
 
     model_name = "N$(N)_m$(m)_n$(n_gammas)_Tpso$(Time_ps)_Tpolish$(Time_lbfgs)"
     
@@ -106,7 +106,17 @@ function MultivExperiment(;N=100000,dist_name,Time_ps=3600,Time_lbfgs=3600,n_gam
     pppp1 = Plots.plot(x, y, fE, legend=false, title = "Projection on L_$m", seriestype=:wireframe)
     pppp2 = Plots.plot(x, y, g, legend=false, title = "Estimation in G_$tpl", seriestype=:wireframe)
     pppp = Plots.plot(pppp1,pppp2, layout = (1,2), size=[1920,1024])
+
+
+    sample_cop = transpose([ordinalrank(sample[1,:]) ordinalrank(sample[2,:])]/(N+1))
+    simu_cop = transpose([ordinalrank(simu_sample[1,:]) ordinalrank(simu_sample[2,:])]/(N+1))
+    new_p2 = qqplot(log_sample[1,1:N_plot],log_simu[1,1:N_plot],qqline = :R, title = "Qqplot (log-scale) of the first marginal")
+    new_q2 = qqplot(log_sample[2,1:N_plot],log_simu[2,1:N_plot],qqline = :R, title = "Qqplot (log-scale) of the second marginal")
+    new_p3 = plot(kde(transpose(sample_cop)), title="KDE de la copule d'origine")
+    new_q3 = plot(kde(transpose(simu_cop)), title="KDE des pseudo-simulation du modèle estimé")
     
+    new_p = plot(new_p2,new_p3,new_q2,new_q3,layout=(2,2),size=[1920,1024])
+
     # Save stuff :
     if !isdir(dist_name)
         mkdir(dist_name)
@@ -116,6 +126,7 @@ function MultivExperiment(;N=100000,dist_name,Time_ps=3600,Time_lbfgs=3600,n_gam
     Plots.savefig(pp,"$dist_name/$(model_name).pdf")
     Plots.savefig(ppp,"$dist_name/$(model_name)_log_scatter.pdf")
     Plots.savefig(pppp,"$dist_name/$(model_name)_density.png")
+    Plots.savefig(new_p,"$dist_name/$(model_name)_cop_and_qqplots.png")
 
     Serialization.serialize("$dist_name/$model_name.model",(alpha,scales))
 
@@ -134,6 +145,10 @@ Pa1 = Distributions.Pareto(1,1)
 MultivExperiment(;dist_name="Clayton(7)_Par(1,1)_LN(0,0.83)",n_gammas=10,m=(10,10),copula=clayton7,marginals=[Pa1, Ln083], shifts=[1,0])
 MultivExperiment(;dist_name="Clayton(7)_Par(1,1)_LN(0,0.83)",n_gammas=20,m=(10,10),copula=clayton7,marginals=[Pa1, Ln083], shifts=[1,0])
 MultivExperiment(;dist_name="Clayton(7)_Par(1,1)_LN(0,0.83)",n_gammas=20,m=(20,20),copula=clayton7,marginals=[Pa1, Ln083], shifts=[1,0])
+
+MultivExperiment(;dist_name="Clayton(7)_LN(0,0.83)_Par(1,1)",n_gammas=10,m=(10,10),copula=clayton7,marginals=[Ln083, Pa1], shifts=[1,0])
+MultivExperiment(;dist_name="Clayton(7)_LN(0,0.83)_Par(1,1)",n_gammas=20,m=(10,10),copula=clayton7,marginals=[Ln083, Pa1], shifts=[1,0])
+MultivExperiment(;dist_name="Clayton(7)_LN(0,0.83)_Par(1,1)",n_gammas=20,m=(20,20),copula=clayton7,marginals=[Ln083, Pa1], shifts=[1,0])
 
 MultivExperiment(;dist_name="Clayton(7)_Par(2.5,1)_LN(0,0.83)",n_gammas=10,m=(10,10),copula=clayton7,marginals=[Pa25, Ln083], shifts=[1,0])
 MultivExperiment(;dist_name="Clayton(7)_Par(2.5,1)_LN(0,0.83)",n_gammas=20,m=(10,10),copula=clayton7,marginals=[Pa25, Ln083], shifts=[1,0])
