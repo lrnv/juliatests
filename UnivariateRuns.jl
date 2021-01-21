@@ -5,19 +5,20 @@ setprecision(512)
 DoubleType = BigFloat
 ArbType = BigFloat
 
-
-function UnivExperiment(;N = 100000,dist_name,dist,Time_ps = 600,Time_lbfgs = 600,m,n_gammas,seed = 123, N_ks_tests = 250, shift = 0)
-
-    Total_time = Int(floor(Time_lbfgs+Time_ps))
-
-    Random.seed!(seed)
+function build_sample(N,dist,shift,m)
     sample = Array{Float64}(undef, 1,N)
     Random.rand!(dist,sample)
     sample .-= shift
     sample = DoubleType.(sample)
-    println("Computing empirical coefs of $dist_name, $N samples (may take some time..)")
     E = ThorinDistributions.empirical_coefs(sample,m)
-    println("Done")
+    return (sample,E)
+end
+function UnivExperiment(;N = 100000,dist_name,dist,Time_ps = 600,Time_lbfgs = 600,m,n_gammas,seed = 123, shift = 0)
+
+    Total_time = Int(floor(Time_lbfgs+Time_ps))
+
+    Random.seed!(seed)
+    sample,E = build_sample(N,dist,shift,m)
 
     println("Launching ParticleSwarm...")
     par = Random.rand(2n_gammas) .- 1/2
@@ -36,7 +37,6 @@ function UnivExperiment(;N = 100000,dist_name,dist,Time_ps = 600,Time_lbfgs = 60
     program = Optim.optimize(obj, par, algo, opt; autodiff = :forward)
     print(program)
     par = Optim.minimizer(program)
-
 
     println("Polishing with LBFGS...")
     if ArbType != DoubleType
@@ -68,10 +68,30 @@ function UnivExperiment(;N = 100000,dist_name,dist,Time_ps = 600,Time_lbfgs = 60
     rez = hcat(alpha,scales)
     rez = rez[sortperm(-rez[:,1]),:]
     display(rez)
+
+
+    # Now that we have the solution, we need to save the model, to be able to reload it later to plot it. 
+    # Save stuff :
+    model_name = "N$(N)_m$(m[1])_Tpso$(Time_ps)_Tpolish$(Time_lbfgs)"
+    model = (model_name,alpha,scales,N,dist_name,dist,Time_ps,Time_lbfgs,m,n_gammas,seed,shift,sample,E)
+
+    
+    # Save stuff :
+    if !isdir("univ/$dist_name")
+        mkdir("univ/$(dist_name)")
+    end
+
+    Serialization.serialize("univ/$(dist_name)/$model_name.model",model)
+    return nothing
+end
+function UnivPlot(filename;N_ks_tests = 250)
+    model_name,alpha,scales,N,dist_name,dist,Time_ps,Time_lbfgs,m,n_gammas,seed,shift,sample,E = Serialization.deserialize(filename)
+
+    #sample,E = build_sample(N,seed,dist,shift,m)
+
     coefs = ThorinDistributions.get_coefficients(alpha,scales,m)
     x = ArbType.(0:0.01:7.5)
 
-    model_name = "N$(N)_m$(m[1])_Tpso$(Time_ps)_Tpolish$(Time_lbfgs)"
     true_density = (x) -> convert(Float64,Distributions.pdf(dist,x+shift))
     moschdist = ThorinDistributions.UnivariateGammaConvolution(alpha,scales)
     fMosch = (x) -> convert(Float64,Distributions.pdf(moschdist,x))
@@ -141,15 +161,19 @@ function UnivExperiment(;N = 100000,dist_name,dist,Time_ps = 600,Time_lbfgs = 60
     )
     Plots.display(p)
 
-    # Save stuff :
-    if !isdir(dist_name)
-        mkdir(dist_name)
+    Plots.savefig(p,"univ/$(dist_name)/$model_name.pdf")
+    return nothing
+end
+function PlotAllUniv(folder="univ/",N_ks_tests=250)
+    for (root, dirs, files) in walkdir(folder)
+        for file in files
+            path = joinpath(root, file) # path to files
+            if split(path,".")[end] == "model"
+                println("Plotting the model: $path")
+                UnivPlot(path;N_ks_tests)
+            end
+        end
     end
-    Plots.savefig(p,"$(dist_name)/$model_name.pdf")
-    Serialization.serialize("$(dist_name)/$model_name.model",(alpha,scales,p_values))
-
-    print("Experiment finished !")
-    return p_values
 end
 
 # Distributions: 
@@ -162,17 +186,17 @@ Pa25 = Distributions.Pareto(2.5,1)
 Ln = Distributions.LogNormal(0,0.83)
 
 
+UnivExperiment(; dist_name = "Weibull(1.5,1)", dist = Weib15, m = (5,), n_gammas = 2)
+UnivExperiment(; dist_name = "Weibull(1.5,1)", dist = Weib15, m = (21,), n_gammas = 10)
+UnivExperiment(; dist_name = "Weibull(1.5,1)", dist = Weib15, m = (41,), n_gammas = 20)
+UnivExperiment(; dist_name = "Weibull(1.5,1)", dist = Weib15, m = (81,), n_gammas = 40)
+
 UnivExperiment(; dist_name = "LogNormal(0,0.83)", dist = Ln, m = (21,), n_gammas = 10)
 UnivExperiment(; dist_name = "LogNormal(0,0.83)", dist = Ln, m = (41,), n_gammas = 20)
 UnivExperiment(; dist_name = "LogNormal(0,0.83)", dist = Ln, m = (81,), n_gammas = 40)
 
-UnivExperiment(; dist_name = "Weibull(1.5,1)", dist = Weib15, m = (5,), n_gammas = 2)
-UnivExperiment(; dist_name = "Weibull(1.5,1)", dist = Weib15), m = (21,), n_gammas = 10)
-UnivExperiment(; dist_name = "Weibull(1.5,1)", dist = Weib15, m = (41,), n_gammas = 20)
-UnivExperiment(; dist_name = "Weibull(1.5,1)", dist = Weib15), m = (81,), n_gammas = 40)
-
 UnivExperiment(; dist_name = "Weibull(0.75,1)", dist = Weib75, m = (5,), n_gammas = 2)
-UnivExperiment(; dist_name = "Weibull(0.75,1)", dist = , m = (21,), n_gammas = 10)
+UnivExperiment(; dist_name = "Weibull(0.75,1)", dist = Weib75, m = (21,), n_gammas = 10)
 UnivExperiment(; dist_name = "Weibull(0.75,1)", dist = Weib75, m = (41,), n_gammas = 20)
 UnivExperiment(; dist_name = "Weibull(0.75,1)", dist = Weib75, m = (81,), n_gammas = 40)
 
@@ -191,3 +215,9 @@ UnivExperiment(; dist_name = "Pareto(1.5,1)", dist = Pa15, m = (81,), n_gammas =
 UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (21,), n_gammas = 10, shift = 1)
 UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (41,), n_gammas = 20, shift = 1)
 UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (81,), n_gammas = 40, shift = 1)
+
+
+# Plot everything : 
+
+
+PlotAllUniv()
