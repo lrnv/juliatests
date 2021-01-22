@@ -5,7 +5,8 @@ setprecision(512)
 DoubleType = BigFloat
 ArbType = BigFloat
 
-function MultivExperiment(;N=100000,dist_name,Time_ps=7200,Time_lbfgs=7200,n_gammas,m,copula,marginals, shifts, m_plot=(20,20), with_regul = false)
+
+function MultivExperiment(;N=100000,dist_name,Time_ps=3600,Time_lbfgs=1800,n_gammas,m,copula,marginals, shifts, with_regul = false)
 
     model_name = "N$(N)_m$(m)_n$(n_gammas)_Tpso$(Time_ps)_Tpolish$(Time_lbfgs)"
     
@@ -71,7 +72,19 @@ function MultivExperiment(;N=100000,dist_name,Time_ps=7200,Time_lbfgs=7200,n_gam
     rez = hcat(alpha,scales)
     rez = rez[sortperm(-rez[:,1]),:]
     display(rez)
-    
+
+
+    # Save stuff :
+    if !isdir("multiv/$dist_name")
+        mkdir("multiv/$dist_name")
+    end
+    to_serialize = (alpha,scales,sample,N,n_gammas,m, copula, dist_name, marginals, shifts,model_name, E)
+    Serialization.serialize("multiv/$dist_name/$model_name.model",to_serialize)
+
+end
+function MultivPlot(filename)
+
+    alpha,scales,sample,N,n_gammas,m, copula, dist_name, marginals, shifts,model_name, E = Serialization.deserialize(filename)
     # generate data for plots:
     dist = ThorinDistributions.MultivariateGammaConvolution(BigFloat.(alpha),BigFloat.(scales))
     simu_sample = BigFloat.(deepcopy(sample))
@@ -98,11 +111,10 @@ function MultivExperiment(;N=100000,dist_name,Time_ps=7200,Time_lbfgs=7200,n_gam
     ppp = plot(p5,p6,layout=(1,2),size=[1920,1024],link=:both)
 
     tpl = (2, n_gammas)
-    E_plot = DoubleType.(ThorinDistributions.empirical_coefs(ArbType.(sample),m_plot))
-    coefs_plot = ThorinDistributions.get_coefficients(alpha,scales,m_plot)
     x = y = 0:0.5:10
-    fE = (x,y)->convert(Float64,ThorinDistributions.laguerre_density([convert(ArbType,x), convert(ArbType,y)], E_plot))
-    g = (x,y)->convert(Float64,ThorinDistributions.laguerre_density([convert(ArbType,x), convert(ArbType,y)], coefs_plot))
+    coefs = ThorinDistributions.get_coefficients(alpha,scales,m)
+    fE = (x,y)->convert(Float64,ThorinDistributions.laguerre_density([convert(ArbType,x), convert(ArbType,y)], E))
+    g = (x,y)->convert(Float64,ThorinDistributions.laguerre_density([convert(ArbType,x), convert(ArbType,y)], coefs))
     pppp1 = Plots.plot(x, y, fE, legend=false, title = "Projection on L_$m", seriestype=:wireframe)
     pppp2 = Plots.plot(x, y, g, legend=false, title = "Estimation in G_$tpl", seriestype=:wireframe)
     pppp = Plots.plot(pppp1,pppp2, layout = (1,2), size=[1920,1024])
@@ -112,24 +124,28 @@ function MultivExperiment(;N=100000,dist_name,Time_ps=7200,Time_lbfgs=7200,n_gam
     simu_cop = transpose([ordinalrank(simu_sample[1,:]) ordinalrank(simu_sample[2,:])]/(N+1))
     new_p2 = qqplot(log_sample[1,1:N_plot],log_simu[1,1:N_plot],qqline = :R, title = "Qqplot (log-scale) of the first marginal")
     new_q2 = qqplot(log_sample[2,1:N_plot],log_simu[2,1:N_plot],qqline = :R, title = "Qqplot (log-scale) of the second marginal")
-    new_p3 = plot(kde(transpose(sample_cop)), title="KDE de la copule d'origine")
-    new_q3 = plot(kde(transpose(simu_cop)), title="KDE des pseudo-simulation du modèle estimé")
+    new_p3 = plot(kde(transpose(sample_cop)), title="KDE of original copula")
+    new_q3 = plot(kde(transpose(simu_cop)), title="KDE of esitmated copula")
     
     new_p = plot(new_p2,new_p3,new_q2,new_q3,layout=(2,2),size=[1920,1024])
 
     # Save stuff :
-    if !isdir(dist_name)
-        mkdir(dist_name)
+    Plots.savefig(p,"multiv/$dist_name/$(model_name)_log.pdf")
+    Plots.savefig(pp,"multiv/$dist_name/$(model_name).pdf")
+    Plots.savefig(ppp,"multiv/$dist_name/$(model_name)_log_scatter.pdf")
+    Plots.savefig(pppp,"multiv/$dist_name/$(model_name)_density.png")
+    Plots.savefig(new_p,"multiv/$dist_name/$(model_name)_cop_and_qqplots.png")
+end
+function PlotAllMultiv(folder="multiv/")
+    for (root, dirs, files) in walkdir(folder)
+        for file in files
+            path = joinpath(root, file) # path to files
+            if split(path,".")[end] == "model"
+                println("Plotting the model: $path")
+                MultivPlot(path)
+            end
+        end
     end
-
-    Plots.savefig(p,"$dist_name/$(model_name)_log.pdf")
-    Plots.savefig(pp,"$dist_name/$(model_name).pdf")
-    Plots.savefig(ppp,"$dist_name/$(model_name)_log_scatter.pdf")
-    Plots.savefig(pppp,"$dist_name/$(model_name)_density.png")
-    Plots.savefig(new_p,"$dist_name/$(model_name)_cop_and_qqplots.png")
-
-    Serialization.serialize("$dist_name/$model_name.model",(alpha,scales))
-
 end
 
 # Copulas
@@ -146,9 +162,9 @@ MultivExperiment(;dist_name="Clayton(7)_Par(1,1)_LN(0,0.83)",n_gammas=10,m=(10,1
 MultivExperiment(;dist_name="Clayton(7)_Par(1,1)_LN(0,0.83)",n_gammas=20,m=(10,10),copula=clayton7,marginals=[Pa1, Ln083], shifts=[1,0])
 MultivExperiment(;dist_name="Clayton(7)_Par(1,1)_LN(0,0.83)",n_gammas=20,m=(20,20),copula=clayton7,marginals=[Pa1, Ln083], shifts=[1,0])
 
-MultivExperiment(;dist_name="Clayton(7)_LN(0,0.83)_Par(1,1)",n_gammas=10,m=(10,10),copula=clayton7,marginals=[Ln083, Pa1], shifts=[1,0])
-MultivExperiment(;dist_name="Clayton(7)_LN(0,0.83)_Par(1,1)",n_gammas=20,m=(10,10),copula=clayton7,marginals=[Ln083, Pa1], shifts=[1,0])
-MultivExperiment(;dist_name="Clayton(7)_LN(0,0.83)_Par(1,1)",n_gammas=20,m=(20,20),copula=clayton7,marginals=[Ln083, Pa1], shifts=[1,0])
+MultivExperiment(;dist_name="Clayton(7)_LN(0,0.83)_Par(1,1)",n_gammas=10,m=(10,10),copula=clayton7,marginals=[Ln083, Pa1], shifts=[0,1])
+MultivExperiment(;dist_name="Clayton(7)_LN(0,0.83)_Par(1,1)",n_gammas=20,m=(10,10),copula=clayton7,marginals=[Ln083, Pa1], shifts=[0,1])
+MultivExperiment(;dist_name="Clayton(7)_LN(0,0.83)_Par(1,1)",n_gammas=20,m=(20,20),copula=clayton7,marginals=[Ln083, Pa1], shifts=[0,1])
 
 MultivExperiment(;dist_name="Clayton(7)_Par(2.5,1)_LN(0,0.83)",n_gammas=10,m=(10,10),copula=clayton7,marginals=[Pa25, Ln083], shifts=[1,0])
 MultivExperiment(;dist_name="Clayton(7)_Par(2.5,1)_LN(0,0.83)",n_gammas=20,m=(10,10),copula=clayton7,marginals=[Pa25, Ln083], shifts=[1,0])
@@ -157,4 +173,6 @@ MultivExperiment(;dist_name="Clayton(7)_Par(2.5,1)_LN(0,0.83)",n_gammas=20,m=(20
 MultivExperiment(;dist_name="MLN(0.5)_LN(0,1)_LN(0,1)",n_gammas=10,m=(10,10),copula=gauss05,marginals=[Ln01,Ln01], shifts=[0,0])
 MultivExperiment(;dist_name="MLN(0.5)_LN(0,1)_LN(0,1)",n_gammas=20,m=(20,20),copula=gauss05,marginals=[Ln01,Ln01], shifts=[0,0])
 MultivExperiment(;dist_name="MLN(0.5)_LN(0,1)_LN(0,1)",n_gammas=20,m=(20,20),copula=gauss05,marginals=[Ln01,Ln01], shifts=[0,0])
+
+PlotAllMultiv()
 

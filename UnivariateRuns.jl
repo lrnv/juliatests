@@ -218,6 +218,4 @@ UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (81,), n_gammas =
 
 
 # Plot everything : 
-
-
 PlotAllUniv()
