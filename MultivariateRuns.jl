@@ -98,43 +98,59 @@ function MultivPlot(filename)
     log_simu = log.(simu_sample)
 
     
-    p1 = marginalkde(log_sample[1,1:N_plot],log_sample[2,1:N_plot];levels=100)
-    p2 = marginalkde(log_simu[1,1:N_plot],log_simu[2,1:N_plot]; levels=100)
-    p = plot(p1,p2,layout=(1,2),size=[1920,1024],link=:both)
+    # p1 = marginalkde(log_sample[1,1:N_plot],log_sample[2,1:N_plot];levels=100)
+    # p2 = marginalkde(log_simu[1,1:N_plot],log_simu[2,1:N_plot]; levels=100)
+    # p = plot(p1,p2,layout=(1,2),size=[1600,900],link=:both)
 
-    p3 = marginalkde(sample[1,1:N_plot],sample[2,1:N_plot];levels=100)
-    p4 = marginalkde(simu_sample[1,1:N_plot],simu_sample[2,1:N_plot]; levels=100)
-    pp = plot(p3,p4,layout=(1,2),size=[1920,1024],link=:both)
+    # p3 = marginalkde(sample[1,1:N_plot],sample[2,1:N_plot];levels=100)
+    # p4 = marginalkde(simu_sample[1,1:N_plot],simu_sample[2,1:N_plot]; levels=100)
+    # pp = plot(p3,p4,layout=(1,2),size=[1600,900],link=:both)
 
-    p5 = scatter(log_sample[1,1:N_plot],log_sample[2,1:N_plot])
-    p6 = scatter(log_simu[1,1:N_plot],log_simu[2,1:N_plot])
-    ppp = plot(p5,p6,layout=(1,2),size=[1920,1024],link=:both)
+    # p5 = scatter(log_sample[1,1:N_plot],log_sample[2,1:N_plot])
+    # p6 = scatter(log_simu[1,1:N_plot],log_simu[2,1:N_plot])
+    # ppp = plot(p5,p6,layout=(1,2),size=[1600,900],link=:both)
 
-    tpl = (2, n_gammas)
-    x = y = 0:0.5:10
-    coefs = ThorinDistributions.get_coefficients(alpha,scales,m)
-    fE = (x,y)->convert(Float64,ThorinDistributions.laguerre_density([convert(ArbType,x), convert(ArbType,y)], E))
-    g = (x,y)->convert(Float64,ThorinDistributions.laguerre_density([convert(ArbType,x), convert(ArbType,y)], coefs))
-    pppp1 = Plots.plot(x, y, fE, legend=false, title = "Projection on L_$m", seriestype=:wireframe)
-    pppp2 = Plots.plot(x, y, g, legend=false, title = "Estimation in G_$tpl", seriestype=:wireframe)
-    pppp = Plots.plot(pppp1,pppp2, layout = (1,2), size=[1920,1024])
+    # tpl = (2, n_gammas)
+    # x = y = 0:0.5:10
+    # coefs = ThorinDistributions.get_coefficients(alpha,scales,m)
+    # fE = (x,y)->convert(Float64,ThorinDistributions.laguerre_density([convert(ArbType,x), convert(ArbType,y)], E))
+    # g = (x,y)->convert(Float64,ThorinDistributions.laguerre_density([convert(ArbType,x), convert(ArbType,y)], coefs))
+    # pppp1 = Plots.plot(x, y, fE, legend=false, title = "Projection on L_$m", seriestype=:wireframe)
+    # pppp2 = Plots.plot(x, y, g, legend=false, title = "Estimation in G_$tpl", seriestype=:wireframe)
+    # pppp = Plots.plot(pppp1,pppp2, layout = (1,2), size=[1600,900])
 
 
     sample_cop = transpose([ordinalrank(sample[1,:]) ordinalrank(sample[2,:])]/(N+1))
     simu_cop = transpose([ordinalrank(simu_sample[1,:]) ordinalrank(simu_sample[2,:])]/(N+1))
-    new_p2 = qqplot(log_sample[1,1:N_plot],log_simu[1,1:N_plot],qqline = :R, title = "Qqplot (log-scale) of the first marginal")
+    new_p2 = qqplot(log_sample[1,1:N_plot],log_simu[1,1:N_plot],qqline = :R, title = "Qqplot (log-scale) of the first marginal", left_margin = 10Plots.mm)
     new_q2 = qqplot(log_sample[2,1:N_plot],log_simu[2,1:N_plot],qqline = :R, title = "Qqplot (log-scale) of the second marginal")
     new_p3 = plot(kde(transpose(sample_cop)), title="KDE of original copula")
-    new_q3 = plot(kde(transpose(simu_cop)), title="KDE of esitmated copula")
-    
-    new_p = plot(new_p2,new_p3,new_q2,new_q3,layout=(2,2),size=[1920,1024])
+    new_q3 = plot(kde(transpose(simu_cop)), title="KDE of estimated copula", left_margin = 10Plots.mm)
+    y = ones(3)
+    title = Plots.scatter(y,
+                            marker=0,
+                            markeralpha=0,
+                            annotations=(2,
+                                         y[2],
+                                         Plots.text("Convolution of $n_gammas bivariates gammas fitted on $N samples of a $dist_name (m = $(m))")),
+                            axis=nothing,
+                            legend=false,
+                            border=:none,
+                            size=(200,100))            
+
+    new_p = plot(
+        title,
+        plot(new_p2,new_p3,new_q3,new_q2,layout=(2,2)),
+        layout=Plots.grid(2,1,heights=[0.01,0.99]),
+        size=[1600,900]
+    )
 
     # Save stuff :
-    Plots.savefig(p,"multiv/$dist_name/$(model_name)_log.pdf")
-    Plots.savefig(pp,"multiv/$dist_name/$(model_name).pdf")
-    Plots.savefig(ppp,"multiv/$dist_name/$(model_name)_log_scatter.pdf")
-    Plots.savefig(pppp,"multiv/$dist_name/$(model_name)_density.png")
-    Plots.savefig(new_p,"multiv/$dist_name/$(model_name)_cop_and_qqplots.png")
+    # Plots.savefig(p,"multiv/$dist_name/$(model_name)_log.pdf") # Beautifull 
+    # Plots.savefig(pp,"multiv/$dist_name/$(model_name).pdf") # -> Useless because does not render correctly. 
+    # Plots.savefig(ppp,"multiv/$dist_name/$(model_name)_log_scatter.pdf") # Not very pleasant, because points go wild on the extremals...
+    # Plots.savefig(pppp,"multiv/$dist_name/$(model_name)_density.png") # Very nice plot if m is big enough. 
+    Plots.savefig(new_p,"multiv/$dist_name/$(model_name).pdf") # Beautifull, lacks a title. Augment the number of levels in the KDE ? 
 end
 function PlotAllMultiv(folder="multiv/")
     for (root, dirs, files) in walkdir(folder)
@@ -175,4 +191,3 @@ MultivExperiment(;dist_name="MLN(0.5)_LN(0,1)_LN(0,1)",n_gammas=20,m=(20,20),cop
 MultivExperiment(;dist_name="MLN(0.5)_LN(0,1)_LN(0,1)",n_gammas=20,m=(20,20),copula=gauss05,marginals=[Ln01,Ln01], shifts=[0,0])
 
 PlotAllMultiv()
-

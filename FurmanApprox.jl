@@ -112,11 +112,8 @@ max_n = maximum(different_ns)
 n_repeats=100 # number of samples for each KS distance
 N_simu = 100000 # Number of simulations for KS distances. 
 
-
 g = compute_g(My_Dist_BF,max_n)
 E = E_from_g(g)
-
-
 
 models_furman = []
 models_me = []
@@ -128,7 +125,6 @@ for n in different_ns
 end
 
 # COmpute KS distances and plot everything : 
-
 values_n = repeat(different_ns,n_repeats)
 values_ks_furman = BigFloat.(deepcopy(values_n))
 values_ks_me = deepcopy(values_ks_furman)
@@ -143,26 +139,19 @@ end
 
 
 model = (My_Dist,different_ns,max_n,n_repeats,N_simu,g,E,models_furman,models_me,values_n,values_ks_furman,values_ks_me)
-Serialization.serialize("FurmanApprox.model",model)
-
-# You can now deserialize it to work with it... easier ! 
-
-
-
-
-
+Serialization.serialize("furman/LnApprox.model",model)
 
 p = violin(values_n, values_ks_furman, side=:left, linewidth=0, label="Miles, Furman & Kuxnetsov")
 p = violin!(values_n, values_ks_me, side=:right, linewidth=0, label="Laguerre")
-
-Plots.savefig(p,"FurmanViolin.pdf")
-
-p = boxplot(values_n, values_ks_furman, linewidth=1, label="Miles, Furman & Kuxnetsov", fillalpha=0.50, side=:right)
-p = boxplot!(values_n, values_ks_me, linewidth=1, label="Laguerre", fillalpha=0.50, side=:left)
-
-Plots.savefig(p,"FurmanBoxplot.pdf")
-
-
+# Plots.savefig(p,"FurmanViolin.pdf")
+# p = boxplot(values_n, values_ks_furman, linewidth=1, label="Miles, Furman & Kuxnetsov", fillalpha=0.50, side=:right)
+# p = boxplot!(values_n, values_ks_me, linewidth=1, label="Laguerre", fillalpha=0.50, side=:left)
+y = ones(3)
+title = Plots.scatter(y,marker=0,markeralpha=0,annotations=(2,y[2],
+                      Plots.text("KS distances to a LN(0,0.83), for different number of gammas, on $n_repeats resamples")),
+                      axis=nothing,legend=false,border=:none,size=(200,100))
+p = Plots.plot(title,p,layout=Plots.grid(2,1,heights=[0.01,0.99]),size=[1600,900])
+Plots.savefig(p,"furman/LnViolin.pdf")
 
 
 # Ok we also want to export a table ith the parameters for the first ones. 
@@ -172,5 +161,34 @@ rez = Array{Float64}(undef,0,5)
 for i in 1:length(different_ns)
     rez = vcat(rez,hcat(repeat([different_ns[i]],different_ns[i]),par_fur[i],par_me[i]))
 end
-CSV.write("Furman_parameters_compare.csv",Tables.table(rez))
+CSV.write("furman/Furman_Ln_parameters_compare.csv",Tables.table(rez))
 
+
+
+# Now we need to do the same thing for a weibull
+
+Weib_BF = Distributions.Weibull(big(3)/big(2),big(1))
+Weib = Distributions.Weibull(3/2,1)
+
+g = compute_g(Weib_BF,max_n)
+E = E_from_g(g)
+
+models_weibull = []
+for n in different_ns
+    append!(models_weibull,[Fit_my_model(E[1:(2n+1)], n; t1 = 200*n)])
+end
+
+# COmpute KS distances and plot everything : 
+values_ks_weibull = BigFloat.(deepcopy(values_n))
+Threads.@threads for id in 1:length(values_n)
+    values_ks_weibull[id] = ExactOneSampleKSTest(vec(Random.rand(models_weibull[id_models[id]],N_simu)),Weib).δ
+end
+
+
+p = boxplot(values_n, values_ks_weibull, linewidth=1, label="Miles, Furman & Kuxnetsov", fillalpha=0.50, side=:right)
+y = ones(3)
+title = Plots.scatter(y,marker=0,markeralpha=0,annotations=(2,y[2],
+                      Plots.text("KS distances to a Weibull(1.5,1), for different number of gammas, on $n_repeats resamples")),
+                      axis=nothing,legend=false,border=:none,size=(200,100))
+p = Plots.plot(title,p,layout=Plots.grid(2,1,heights=[0.01,0.99]),size=[1600,900])
+Plots.savefig(p,"furman/WeibBoxplot.pdf")

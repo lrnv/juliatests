@@ -127,19 +127,19 @@ function UnivPlot(filename;N_ks_tests = 250)
    end
    diffMat = diffMat[:,3:end]
 
-    density_label = ["Theoretical $dist_name" "Gaussian kernel of input data" "L_$m estimation" "L_$m projection of the estimated GC"]
-    diff_label = ["L_$m estimation" "L_$m projection of the estimated GC"]
+    density_label = ["Laguerre projection (m = $m)" "Laguerre density of the estimated GC (m = $m)" "Theoretical $dist_name" "Gaussian kernel of input data"]
+    diff_label = ["Laguerre projection (m = $m)" "Laguerre density of the estimated GC (m = $m)"]
 
     println("Plotting...")
-    p0 = Plots.plot(x,plotMat,title = "Densities",label =density_label)
-    p1 = Plots.plot(x,diffMat,title = "Difference to the true density",label =diff_label)
+    p0 = Plots.plot(x,hcat(plotMat[:,3:4],plotMat[:,1:2]),title = "Densities",label =density_label, left_margin = 10Plots.mm)
+    p1 = Plots.plot(x,diffMat,title = "Difference to the true density",label =diff_label, left_margin = 10Plots.mm)
     y = ones(3)
     title = Plots.scatter(y,
                             marker=0,
                             markeralpha=0,
                             annotations=(2,
                                          y[2],
-                                         Plots.text("Univariate $dist_name, $N samples, $n_gammas gammas, m = $(m[1])")),
+                                         Plots.text("Convolution of $n_gammas gammas fitted on $N samples of a $dist_name (m = $(m[1]))")),
                                          #Plots.text("Univariate $dist_name, $N samples, $n_gammas gammas, m = $(m[1]), $(Total_time) seconds")),
                             axis=nothing,
                             legend=false,
@@ -148,16 +148,16 @@ function UnivPlot(filename;N_ks_tests = 250)
 
     new_sample = deepcopy(sample)
     Random.rand!(moschdist,new_sample)
-    p2 = StatsPlots.qqplot(Float64.(vec(log.(sample))), Float64.(vec(log.(new_sample))), qqline = :fit, title="Empirical QQplot")
+    p2 = StatsPlots.qqplot(Float64.(vec(log.(sample))), Float64.(vec(log.(new_sample))), qqline = :fit, title="Empirical QQplot (simulations of the estimated GC vs original samples)")
 
-    p3 = StatsPlots.histogram(p_values,bins=20,legend=nothing,title="KS test: histogram of p-values of $(N_ks_tests) resamples", yaxis=nothing)
+    p3 = StatsPlots.histogram(p_values,bins=20,legend=nothing,title="Histogram of KS p-values, $(N_ks_tests) resampled tests", yaxis=nothing)
                             
 
     p = Plots.plot(
         title,
         Plots.plot(p0, p2, p1, p3,layout = (2,2)),
         layout=Plots.grid(2,1,heights=[0.01,0.99]),
-        size=[1920,1080]
+        size=[1600,900]
     )
     Plots.display(p)
 
