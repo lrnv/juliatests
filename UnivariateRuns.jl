@@ -179,6 +179,7 @@ end
 # Distributions: 
 Weib15 = Distributions.Weibull(3/2,1)
 Weib75 = Distributions.Weibull(3/4,1)
+Pa025 = Distributions.Pareto(0.25,1)
 Pa05 = Distributions.Pareto(0.5,1)
 Pa10 = Distributions.Pareto(1.0,1)
 Pa15 = Distributions.Pareto(1.5,1)
@@ -217,5 +218,125 @@ UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (41,), n_gammas =
 UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (81,), n_gammas = 40, shift = 1)
 
 
+# Some more pareto : 
+UnivExperiment(; dist_name = "Pareto(0.25,1)", dist = Pa025, m = (5,), n_gammas = 2, shift = 1)
+UnivExperiment(; dist_name = "Pareto(0.25,1)", dist = Pa025, m = (7,), n_gammas = 3, shift = 1)
+UnivExperiment(; dist_name = "Pareto(0.25,1)", dist = Pa025, m = (9,), n_gammas = 4, shift = 1)
+UnivExperiment(; dist_name = "Pareto(0.25,1)", dist = Pa025, m = (11,), n_gammas = 5, shift = 1)
+UnivExperiment(; dist_name = "Pareto(0.25,1)", dist = Pa025, m = (21,), n_gammas = 10, shift = 1)
+UnivExperiment(; dist_name = "Pareto(0.25,1)", dist = Pa025, m = (41,), n_gammas = 20, shift = 1)
+UnivExperiment(; dist_name = "Pareto(0.25,1)", dist = Pa025, m = (81,), n_gammas = 40, shift = 1)
+
+UnivExperiment(; dist_name = "Pareto(0.5,1)", dist = Pa05, m = (5,), n_gammas = 2, shift = 1)
+UnivExperiment(; dist_name = "Pareto(0.5,1)", dist = Pa05, m = (7,), n_gammas = 3, shift = 1)
+UnivExperiment(; dist_name = "Pareto(0.5,1)", dist = Pa05, m = (9,), n_gammas = 4, shift = 1)
+UnivExperiment(; dist_name = "Pareto(0.5,1)", dist = Pa05, m = (11,), n_gammas = 5, shift = 1)
+
+UnivExperiment(; dist_name = "Pareto(1,1)", dist = Pa10, m = (5,), n_gammas = 2, shift = 1)
+UnivExperiment(; dist_name = "Pareto(1,1)", dist = Pa10, m = (7,), n_gammas = 3, shift = 1)
+UnivExperiment(; dist_name = "Pareto(1,1)", dist = Pa10, m = (9,), n_gammas = 4, shift = 1)
+UnivExperiment(; dist_name = "Pareto(1,1)", dist = Pa10, m = (11,), n_gammas = 5, shift = 1)
+
+UnivExperiment(; dist_name = "Pareto(1.5,1)", dist = Pa15, m = (5,), n_gammas = 2, shift = 1)
+UnivExperiment(; dist_name = "Pareto(1.5,1)", dist = Pa15, m = (7,), n_gammas = 3, shift = 1)
+UnivExperiment(; dist_name = "Pareto(1.5,1)", dist = Pa15, m = (9,), n_gammas = 4, shift = 1)
+UnivExperiment(; dist_name = "Pareto(1.5,1)", dist = Pa15, m = (11,), n_gammas = 5, shift = 1)
+
+UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (5,), n_gammas = 2, shift = 1)
+UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (7,), n_gammas = 3, shift = 1)
+UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (9,), n_gammas = 4, shift = 1)
+UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (9,), n_gammas = 5, shift = 1)
+
+
+
 # Plot everything : 
 PlotAllUniv()
+
+function create_title_plot(title)
+    y = ones(3)
+    return Plots.scatter(y,marker=0,markeralpha=0,
+    annotations=(2, y[2],Plots.text(title)),
+    axis=nothing, legend=false, border=:none, size=(200,100))
+end
+
+function Build_pareto_summary(;N_pts = 1000)
+
+
+    plot_list = []
+    alpha_list = []
+    n_gammas_list = []
+    folder = "univ/"
+    for (root, dirs, files) in walkdir(folder)
+        for file in files
+            path = joinpath(root, file) # path to files
+            if split(path,".")[end] == "model" && split(path,"(")[begin] == "univ/Pareto"
+                println("We got: $path")
+                model_name,alpha,scales,N,dist_name,dist,Time_ps,Time_lbfgs,m,n_gammas,seed,shift,sample,E = Serialization.deserialize(path)
+
+                # # Labels : 
+                # if dist.α ∉ alpha_list # then new alpha: 
+                #     y_lab = "k = $dist.α"
+                # else
+                #     y_lab = nothing
+                # end
+                # if n_gammas ∉ n_gammas_list
+                #     x_lab = "n = $n_gammas"
+                # else
+                #     x_lab = nothing
+                # end
+                
+
+
+                moschdist = ThorinDistributions.UnivariateGammaConvolution(alpha,scales) ###################################
+                sample = sample[:,1:N_pts]
+                new_sample = deepcopy(sample)
+                Random.rand!(moschdist,new_sample)
+                p = StatsPlots.qqplot(Float64.(vec(log.(sample))), 
+                                    Float64.(vec(log.(new_sample))), 
+                                    #   xlabel = x_lab,
+                                    #   xmirror=true,
+                                    #   ylabel = y_lab,
+                                    qqline = :fit, 
+                                    leg = false, 
+                                    ticks = nothing, 
+                                    border = :none#, 
+                                    #title = "k = $(dist.α), n = $n_gammas"
+                                    )                     
+                append!(plot_list, [p])
+                append!(alpha_list, [dist.α])
+                append!(n_gammas_list, [n_gammas])
+            end
+        end
+    end
+
+
+    # We need to add several plots for the legend : 
+
+
+    unique_n = unique(n_gammas_list)
+    unique_alpha = unique(alpha_list)
+
+    final_plots = [create_title_plot(" ")]
+
+    for n in unique_n
+        append!(final_plots,[create_title_plot("n = $n")])
+    end
+    for i in 1:length(unique_alpha)
+        append!(final_plots,[create_title_plot("k = $(unique_alpha[i])")])
+        for j in 1:length(unique_n)
+            append!(final_plots,[plot_list[(i-1)*length(unique_n)+j]])
+        end
+    end
+
+
+    n_col = length(unique_n)+1
+    n_row = length(unique_alpha)+1
+    hei = [0.01, repeat([0.99/(n_row-1)], n_row-1)...]
+    wid = [0.10, repeat([0.90/(n_col-1)], n_col-1)... ]
+    lay = Plots.grid(n_row,n_col,heights=hei, widths = wid)
+
+    p = plot(final_plots..., layout = lay, size=[1024,600])
+    Plots.savefig(p,"univ/pareto_summary.png")
+end
+
+Build_pareto_summary()
