@@ -148,7 +148,7 @@ function UnivPlot(filename;N_ks_tests = 250)
 
     new_sample = deepcopy(sample)
     Random.rand!(moschdist,new_sample)
-    p2 = StatsPlots.qqplot(Float64.(vec(log.(sample))), Float64.(vec(log.(new_sample))), qqline = :fit, title="Empirical QQplot (simulations of the estimated GC vs original samples)")
+    p2 = StatsPlots.qqplot(Float64.(vec(log.(sample))), Float64.(vec(log.(new_sample))), qqline = :fit, title="QQplot: Estimated GC vs original samples")
 
     p3 = StatsPlots.histogram(p_values,bins=20,legend=nothing,title="Histogram of KS p-values, $(N_ks_tests) resampled tests", yaxis=nothing)
                             
@@ -157,7 +157,7 @@ function UnivPlot(filename;N_ks_tests = 250)
         title,
         Plots.plot(p0, p2, p1, p3,layout = (2,2)),
         layout=Plots.grid(2,1,heights=[0.01,0.99]),
-        size=[1600,900]
+        size=[1024,600]
     )
     Plots.display(p)
 

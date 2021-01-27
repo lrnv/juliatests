@@ -143,9 +143,12 @@ end
 model = (My_Dist,different_ns,max_n,n_repeats,N_simu,g,E,models_furman,models_me,values_n,values_ks_furman,values_ks_me)
 Serialization.serialize("furman/LnApprox.model",model)
 
+# Deserialize call : 
+# My_Dist,different_ns,max_n,n_repeats,N_simu,g,E,models_furman,models_me,values_n,values_ks_furman,values_ks_me = Serialization.deserialize("furman/LnApprox.model")
+
 are_ok = .! isnan.(values_ks_furman .* values_ks_me)
 
-p = violin(values_n[are_ok], values_ks_furman[are_ok], side=:left, linewidth=0, label="Miles, Furman & Kuxnetsov", left_margin = 10Plots.mm)
+p = violin(values_n[are_ok], values_ks_furman[are_ok], side=:left, linewidth=0, label="MFK", left_margin = 10Plots.mm)
 p = violin!(values_n[are_ok], values_ks_me[are_ok], side=:right, linewidth=0, label="Laguerre")
 # Plots.savefig(p,"FurmanViolin.pdf")
 # p = boxplot(values_n, values_ks_furman, linewidth=1, label="Miles, Furman & Kuxnetsov", fillalpha=0.50, side=:right)
@@ -154,7 +157,7 @@ y = ones(3)
 title = Plots.scatter(y,marker=0,markeralpha=0,annotations=(2,y[2],
                       Plots.text("KS distances to a LN(0,0.83), for different number of gammas, on $n_repeats resamples")),
                       axis=nothing,legend=false,border=:none,size=(200,100))
-p = Plots.plot(title,p,layout=Plots.grid(2,1,heights=[0.01,0.99]),size=[1600,900])
+p = Plots.plot(title,p,layout=Plots.grid(2,1,heights=[0.01,0.99]),size=[1024,600])
 Plots.savefig(p,"furman/LnViolin.pdf")
 
 
@@ -179,7 +182,7 @@ E = E_from_g(g)
 
 models_weibull = []
 for n in different_ns
-    append!(models_weibull,[Fit_my_model(E[1:(2n+1)], n; t1 = 20*n)]) 
+    append!(models_weibull,[Fit_my_model(E[1:(2n+1)], n; t1 = 100*n)]) 
 end
 
 # COmpute KS distances and plot everything : 
@@ -190,10 +193,16 @@ Threads.@threads for id in 1:length(values_n)
 end
 
 
+model_weib = (models_weibull,values_ks_weibull)
+Serialization.serialize("furman/WeibApprox.model",model_weib)
+
+# Deserialisation : 
+#models_weibull, values_ks_weibull = Serialization.deserialize("furman/WeibApprox.model")
+
 p = boxplot(values_n, values_ks_weibull, linewidth=1, fillalpha=0.50, left_margin = 10Plots.mm)
 y = ones(3)
 title = Plots.scatter(y,marker=0,markeralpha=0,annotations=(2,y[2],
                       Plots.text("KS distances to a Weibull(1.5,1), for different number of gammas, on $n_repeats resamples")),
                       axis=nothing,legend=false,border=:none,size=(200,100))
-p = Plots.plot(title,p,layout=Plots.grid(2,1,heights=[0.01,0.99]),size=[1600,900])
+p = Plots.plot(title,p,layout=Plots.grid(2,1,heights=[0.01,0.99]),size=[1024,600])
 Plots.savefig(p,"furman/WeibBoxplot.pdf")

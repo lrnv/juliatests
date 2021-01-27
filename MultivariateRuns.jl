@@ -132,7 +132,7 @@ function MultivPlot(filename)
                             markeralpha=0,
                             annotations=(2,
                                          y[2],
-                                         Plots.text("Convolution of $n_gammas bivariates gammas fitted on $N samples of a $dist_name (m = $(m))")),
+                                         Plots.text("Convolution of $n_gammas gammas fitted on $N samples of a $dist_name (m = $(m))")),
                             axis=nothing,
                             legend=false,
                             border=:none,
@@ -142,7 +142,7 @@ function MultivPlot(filename)
         title,
         plot(new_p2,new_p3,new_q3,new_q2,layout=(2,2)),
         layout=Plots.grid(2,1,heights=[0.01,0.99]),
-        size=[1600,900]
+        size=[1024,600]
     )
 
     # Save stuff :
