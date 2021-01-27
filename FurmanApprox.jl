@@ -74,7 +74,7 @@ function E_from_g(g)
     end
     return a
 end
-function Fit_my_model(E,n_gammas;t1=10,t2=600,tol=big(0.1^22))
+function Fit_my_model(E,n_gammas;t1=10,t2=1200,tol=big(0.1^22))
     par = big.(Random.rand(2n_gammas) .- 1/2)
     obj = x -> ThorinDistributions.L2Objective(x,E)
     program = Optim.optimize(obj, 
@@ -101,6 +101,8 @@ function Fit_my_model(E,n_gammas;t1=10,t2=600,tol=big(0.1^22))
     par = Optim.minimizer(program2)
     alpha = par[1:n_gammas] .^2 #make them positives
     scales = reshape(par[(n_gammas+1):2n_gammas],(n_gammas,)) .^ 2 # make them positives
+    display(alpha)
+    display(scales)
 
     return ThorinDistributions.UnivariateGammaConvolution(Float64.(alpha),Float64.(scales))
 end
@@ -141,8 +143,10 @@ end
 model = (My_Dist,different_ns,max_n,n_repeats,N_simu,g,E,models_furman,models_me,values_n,values_ks_furman,values_ks_me)
 Serialization.serialize("furman/LnApprox.model",model)
 
-p = violin(values_n, values_ks_furman, side=:left, linewidth=0, label="Miles, Furman & Kuxnetsov")
-p = violin!(values_n, values_ks_me, side=:right, linewidth=0, label="Laguerre")
+are_ok = .! isnan.(values_ks_furman .* values_ks_me)
+
+p = violin(values_n[are_ok], values_ks_furman[are_ok], side=:left, linewidth=0, label="Miles, Furman & Kuxnetsov", left_margin = 10Plots.mm)
+p = violin!(values_n[are_ok], values_ks_me[are_ok], side=:right, linewidth=0, label="Laguerre")
 # Plots.savefig(p,"FurmanViolin.pdf")
 # p = boxplot(values_n, values_ks_furman, linewidth=1, label="Miles, Furman & Kuxnetsov", fillalpha=0.50, side=:right)
 # p = boxplot!(values_n, values_ks_me, linewidth=1, label="Laguerre", fillalpha=0.50, side=:left)
@@ -175,17 +179,18 @@ E = E_from_g(g)
 
 models_weibull = []
 for n in different_ns
-    append!(models_weibull,[Fit_my_model(E[1:(2n+1)], n; t1 = 200*n)])
+    append!(models_weibull,[Fit_my_model(E[1:(2n+1)], n; t1 = 20*n)]) 
 end
 
 # COmpute KS distances and plot everything : 
 values_ks_weibull = BigFloat.(deepcopy(values_n))
 Threads.@threads for id in 1:length(values_n)
-    values_ks_weibull[id] = ExactOneSampleKSTest(vec(Random.rand(models_weibull[id_models[id]],N_simu)),Weib).δ
+    values_ks_weibull[id] = ExactOneSampleKSTest(vec(Random.rand(models_weibull[findall(x -> x == id_models[id], different_ns)[1]],N_simu)),Weib).δ
+    println(id)
 end
 
 
-p = boxplot(values_n, values_ks_weibull, linewidth=1, label="Miles, Furman & Kuxnetsov", fillalpha=0.50, side=:right)
+p = boxplot(values_n, values_ks_weibull, linewidth=1, fillalpha=0.50, left_margin = 10Plots.mm)
 y = ones(3)
 title = Plots.scatter(y,marker=0,markeralpha=0,annotations=(2,y[2],
                       Plots.text("KS distances to a Weibull(1.5,1), for different number of gammas, on $n_repeats resamples")),
