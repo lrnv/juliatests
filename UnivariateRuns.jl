@@ -245,9 +245,11 @@ UnivExperiment(; dist_name = "Pareto(1.5,1)", dist = Pa15, m = (11,), n_gammas =
 UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (5,), n_gammas = 2, shift = 1)
 UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (7,), n_gammas = 3, shift = 1)
 UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (9,), n_gammas = 4, shift = 1)
-UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (9,), n_gammas = 5, shift = 1)
+UnivExperiment(; dist_name = "Pareto(2.5,1)", dist = Pa25, m = (11,), n_gammas = 5, shift = 1)
 
 
+#UnivPlot("univ/Pareto(2.5,1)/N100000_m9_Tpso600_Tpolish600.model")
+#UnivPlot("univ/Pareto(2.5,1)/N100000_m11_Tpso600_Tpolish600.model")
 
 # Plot everything : 
 PlotAllUniv()
@@ -259,7 +261,7 @@ function create_title_plot(title)
     axis=nothing, legend=false, border=:none, size=(200,100))
 end
 
-function Build_pareto_summary(;N_pts = 1000)
+function Build_pareto_summary(;N_pts = 1000, exclude_pts = 0)
 
 
     plot_list = []
@@ -273,24 +275,20 @@ function Build_pareto_summary(;N_pts = 1000)
                 println("We got: $path")
                 model_name,alpha,scales,N,dist_name,dist,Time_ps,Time_lbfgs,m,n_gammas,seed,shift,sample,E = Serialization.deserialize(path)
 
-                # # Labels : 
-                # if dist.α ∉ alpha_list # then new alpha: 
-                #     y_lab = "k = $dist.α"
-                # else
-                #     y_lab = nothing
-                # end
-                # if n_gammas ∉ n_gammas_list
-                #     x_lab = "n = $n_gammas"
-                # else
-                #     x_lab = nothing
-                # end
-                
-
-
                 moschdist = ThorinDistributions.UnivariateGammaConvolution(alpha,scales) ###################################
                 sample = sample[:,1:N_pts]
                 new_sample = deepcopy(sample)
                 Random.rand!(moschdist,new_sample)
+
+
+                # we could set a maximum and minimum quantile to plot: 
+                if exclude_pts > 0
+                    sample = sort(vec(sample))[(begin+exclude_pts):(end-3*exclude_pts)]
+                    new_sample = sort(vec(new_sample))[(begin+exclude_pts):(end-3*exclude_pts)]
+                end
+
+
+
                 p = StatsPlots.qqplot(Float64.(vec(log.(sample))), 
                                     Float64.(vec(log.(new_sample))), 
                                     #   xlabel = x_lab,
@@ -316,14 +314,16 @@ function Build_pareto_summary(;N_pts = 1000)
     unique_n = unique(n_gammas_list)
     unique_alpha = unique(alpha_list)
 
+    order_n = sortperm(unique_n)
+
     final_plots = [create_title_plot(" ")]
 
-    for n in unique_n
+    for n in unique_n[order_n]
         append!(final_plots,[create_title_plot("n = $n")])
     end
     for i in 1:length(unique_alpha)
         append!(final_plots,[create_title_plot("k = $(unique_alpha[i])")])
-        for j in 1:length(unique_n)
+        for j in order_n
             append!(final_plots,[plot_list[(i-1)*length(unique_n)+j]])
         end
     end
@@ -340,3 +340,4 @@ function Build_pareto_summary(;N_pts = 1000)
 end
 
 Build_pareto_summary()
+
