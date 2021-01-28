@@ -186,9 +186,10 @@ for n in different_ns
 end
 
 # COmpute KS distances and plot everything : 
+
 values_ks_weibull = BigFloat.(deepcopy(values_n))
 Threads.@threads for id in 1:length(values_n)
-    values_ks_weibull[id] = ExactOneSampleKSTest(vec(Random.rand(models_weibull[findall(x -> x == id_models[id], different_ns)[1]],N_simu)),Weib).δ
+    values_ks_weibull[id] = ExactOneSampleKSTest(vec(Random.rand(models_weibull[findall(x -> x == values_n[id], different_ns)[1]],N_simu)),Weib).δ
     println(id)
 end
 
@@ -206,3 +207,11 @@ title = Plots.scatter(y,marker=0,markeralpha=0,annotations=(2,y[2],
                       axis=nothing,legend=false,border=:none,size=(200,100))
 p = Plots.plot(title,p,layout=Plots.grid(2,1,heights=[0.01,0.99]),size=[1024,600])
 Plots.savefig(p,"furman/WeibBoxplot.pdf")
+
+
+par_weib= map(x -> [x.α x.θ], models_weibull)
+rez_weib = Array{Float64}(undef,0,3)
+for i in 1:length(different_ns)
+    rez_weib = vcat(rez_weib,hcat(repeat([different_ns[i]],size(par_weib[i],1)),par_weib[i]))
+end
+CSV.write("furman/weibull.csv",Tables.table(rez_weib))
