@@ -182,16 +182,21 @@ E = E_from_g(g)
 
 models_weibull = []
 for n in different_ns
-    append!(models_weibull,[Fit_my_model(E[1:(2n+1)], n; t1 = 100*n)]) 
+    append!(models_weibull,[Fit_my_model(E[1:(2n+1)], n; t1 = 10*n)]) 
 end
 
 # COmpute KS distances and plot everything : 
 
 values_ks_weibull = BigFloat.(deepcopy(values_n))
+values_ks_weibull2 = BigFloat.(deepcopy(values_n))
+test_array = Array{ExactOneSampleKSTest,1}(undef,(length(values_n),));
 Threads.@threads for id in 1:length(values_n)
-    values_ks_weibull[id] = ExactOneSampleKSTest(vec(Random.rand(models_weibull[findall(x -> x == values_n[id], different_ns)[1]],N_simu)),Weib).δ
+    test_array[id] = ExactOneSampleKSTest(vec(Random.rand(models_weibull[findall(x -> x == values_n[id], different_ns)[1]],N_simu)),Weib)
+    values_ks_weibull[id] = test_array[id].δn + test_array[id].δp
+    values_ks_weibull2[id] = test_array[id].δ
     println(id)
 end
+
 
 
 model_weib = (models_weibull,values_ks_weibull)
@@ -199,6 +204,14 @@ Serialization.serialize("furman/WeibApprox.model",model_weib)
 
 # Deserialisation : 
 #models_weibull, values_ks_weibull = Serialization.deserialize("furman/WeibApprox.model")
+
+p = violin(values_n, values_ks_weibull, linewidth=1, fillalpha=0.50, left_margin = 10Plots.mm)
+y = ones(3)
+title = Plots.scatter(y,marker=0,markeralpha=0,annotations=(2,y[2],
+                      Plots.text("KS distances to a Weibull(1.5,1), for different number of gammas, on $n_repeats resamples")),
+                      axis=nothing,legend=false,border=:none,size=(200,100))
+p = Plots.plot(title,p,layout=Plots.grid(2,1,heights=[0.01,0.99]),size=[1024,600])
+Plots.savefig(p,"furman/WeibViolin.pdf")
 
 p = boxplot(values_n, values_ks_weibull, linewidth=1, fillalpha=0.50, left_margin = 10Plots.mm)
 y = ones(3)
@@ -208,10 +221,9 @@ title = Plots.scatter(y,marker=0,markeralpha=0,annotations=(2,y[2],
 p = Plots.plot(title,p,layout=Plots.grid(2,1,heights=[0.01,0.99]),size=[1024,600])
 Plots.savefig(p,"furman/WeibBoxplot.pdf")
 
-
-par_weib= map(x -> [x.α x.θ], models_weibull)
-rez_weib = Array{Float64}(undef,0,3)
-for i in 1:length(different_ns)
-    rez_weib = vcat(rez_weib,hcat(repeat([different_ns[i]],size(par_weib[i],1)),par_weib[i]))
-end
-CSV.write("furman/weibull.csv",Tables.table(rez_weib))
+# par_weib= map(x -> [x.α x.θ], models_weibull)
+# rez_weib = Array{Float64}(undef,0,3)
+# for i in 1:length(different_ns)
+#     rez_weib = vcat(rez_weib,hcat(repeat([different_ns[i]],size(par_weib[i],1)),par_weib[i]))
+# end
+# CSV.write("furman/weibull.csv",Tables.table(rez_weib))
