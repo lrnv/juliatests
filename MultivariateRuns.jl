@@ -150,7 +150,21 @@ function MultivPlot(filename)
     # Plots.savefig(pp,"multiv/$dist_name/$(model_name).pdf") # -> Useless because does not render correctly. 
     # Plots.savefig(ppp,"multiv/$dist_name/$(model_name)_log_scatter.pdf") # Not very pleasant, because points go wild on the extremals...
     # Plots.savefig(pppp,"multiv/$dist_name/$(model_name)_density.png") # Very nice plot if m is big enough. 
+
+
+
+
     Plots.savefig(new_p,"multiv/$dist_name/$(model_name).pdf") # Beautifull, lacks a title. Augment the number of levels in the KDE ? 
+
+    # Save stuff :
+    if !isdir("png/multiv/$dist_name")
+        mkdir("png/multiv/$dist_name")
+    end
+
+    Plots.savefig(new_p,"png/multiv/$dist_name/$(model_name).png") # Beautifull, lacks a title. Augment the number of levels in the KDE ? 
+
+
+
 end
 function PlotAllMultiv(folder="multiv/")
     for (root, dirs, files) in walkdir(folder)

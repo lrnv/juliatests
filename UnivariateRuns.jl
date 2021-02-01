@@ -161,7 +161,20 @@ function UnivPlot(filename;N_ks_tests = 250)
     )
     Plots.display(p)
 
+    p_small = Plots.plot(title,
+                        Plots.plot(p1,p2,layout=(1,2)),
+                        layout=Plots.grid(2,1,heights=[0.02,0.98]),
+                        size=[1024,350]
+                        )
+
     Plots.savefig(p,"univ/$(dist_name)/$model_name.pdf")
+    Plots.savefig(p_small,"univ/$(dist_name)/$(model_name)_small.pdf")
+
+    if !isdir("png/univ/$dist_name")
+        mkdir("png/univ/$(dist_name)")
+    end
+    Plots.savefig(p,"png/univ/$(dist_name)/$model_name.png")
+    Plots.savefig(p_small,"png/univ/$(dist_name)/$(model_name)_small.png")
     return nothing
 end
 function PlotAllUniv(folder="univ/",N_ks_tests=250)
@@ -337,6 +350,7 @@ function Build_pareto_summary(;N_pts = 1000, exclude_pts = 0)
 
     p = plot(final_plots..., layout = lay, size=[1024,600])
     Plots.savefig(p,"univ/pareto_summary.png")
+    Plots.savefig(p,"png/univ/pareto_summary.png")
 end
 
 Build_pareto_summary()

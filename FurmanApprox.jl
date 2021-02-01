@@ -159,6 +159,7 @@ title = Plots.scatter(y,marker=0,markeralpha=0,annotations=(2,y[2],
                       axis=nothing,legend=false,border=:none,size=(200,100))
 p = Plots.plot(title,p,layout=Plots.grid(2,1,heights=[0.01,0.99]),size=[1024,600])
 Plots.savefig(p,"furman/LnViolin.pdf")
+Plots.savefig(p,"png/furman/LnViolin.png")
 
 
 # Ok we also want to export a table ith the parameters for the first ones. 
@@ -212,6 +213,7 @@ title = Plots.scatter(y,marker=0,markeralpha=0,annotations=(2,y[2],
                       axis=nothing,legend=false,border=:none,size=(200,100))
 p = Plots.plot(title,p,layout=Plots.grid(2,1,heights=[0.01,0.99]),size=[1024,600])
 Plots.savefig(p,"furman/WeibViolin.pdf")
+Plots.savefig(p,"png/furman/WeibViolin.png")
 
 p = boxplot(values_n, values_ks_weibull, linewidth=1, fillalpha=0.50, left_margin = 10Plots.mm)
 y = ones(3)
@@ -220,6 +222,7 @@ title = Plots.scatter(y,marker=0,markeralpha=0,annotations=(2,y[2],
                       axis=nothing,legend=false,border=:none,size=(200,100))
 p = Plots.plot(title,p,layout=Plots.grid(2,1,heights=[0.01,0.99]),size=[1024,600])
 Plots.savefig(p,"furman/WeibBoxplot.pdf")
+Plots.savefig(p,"png/furman/WeibBoxplot.png")
 
 # par_weib= map(x -> [x.α x.θ], models_weibull)
 # rez_weib = Array{Float64}(undef,0,3)
