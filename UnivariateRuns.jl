@@ -272,7 +272,6 @@ function create_title_plot(title)
     annotations=(2, y[2],Plots.text(title)),
     axis=nothing, legend=false, border=:none, size=(200,100))
 end
-
 function Build_pareto_summary(;N_pts = 1000, exclude_pts = 0)
 
 
@@ -347,10 +346,36 @@ function Build_pareto_summary(;N_pts = 1000, exclude_pts = 0)
     wid = [0.10, repeat([0.90/(n_col-1)], n_col-1)... ]
     lay = Plots.grid(n_row,n_col,heights=hei, widths = wid)
 
-    p = plot(final_plots..., layout = lay, size=[1024,600])
-    Plots.savefig(p,"univ/pareto_summary.png")
-    Plots.savefig(p,"png/univ/pareto_summary.png")
+    p = Plots.plot(final_plots..., layout = lay, size=[1024,600])
+    if exclude_pts == 0
+        filename_to_save = "pareto_summary"
+    else
+        filename_to_save = "pareto_summary_excl$exclude_pts"
+    end
+    Plots.savefig(p,"univ/$filename_to_save.pdf")
+    Plots.savefig(p,"png/univ/$filename_to_save.png")
 end
 
 Build_pareto_summary()
+Build_pareto_summary(exclude_pts=1)
+Build_pareto_summary(exclude_pts=5)
+Build_pareto_summary(exclude_pts=10)
+
+
+function PlotAllUnivFiltered(;folder="univ/",N_ks_tests=250, filter = "/")
+    for (root, dirs, files) in walkdir(folder)
+        for file in files
+            path = joinpath(root, file) # path to files
+            if (split(path,".")[end] == "model")  & occursin(filter,path)
+                println("Plotting the model: $path")
+                UnivPlot(path;N_ks_tests)
+            end
+        end
+    end
+end
+
+PlotAllUnivFiltered(filter="Pareto(1.5,1)")
+PlotAllUnivFiltered(filter="Pareto(2.5,1)")
+PlotAllUnivFiltered(filter="Weibull(0.75,1)")
+PlotAllUnivFiltered(filter="Weibull(1.5,1)")
 
