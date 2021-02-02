@@ -189,7 +189,6 @@ function PlotAllUniv(folder="univ/",N_ks_tests=250)
     end
 end
 
-
 # Distributions: 
 Weib15 = Distributions.Weibull(3/2,1)
 Weib75 = Distributions.Weibull(3/4,1)
@@ -199,7 +198,6 @@ Pa10 = Distributions.Pareto(1.0,1)
 Pa15 = Distributions.Pareto(1.5,1)
 Pa25 = Distributions.Pareto(2.5,1)
 Ln = Distributions.LogNormal(0,0.83)
-
 
 UnivExperiment(; dist_name = "Weibull(1.5,1)", dist = Weib15, m = (5,), n_gammas = 2)
 UnivExperiment(; dist_name = "Weibull(1.5,1)", dist = Weib15, m = (21,), n_gammas = 10)
