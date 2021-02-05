@@ -272,7 +272,7 @@ function create_title_plot(title)
     annotations=(2, y[2],Plots.text(title)),
     axis=nothing, legend=false, border=:none, size=(200,100))
 end
-function Build_pareto_summary(;N_pts = 1000, exclude_pts = 0)
+function Build_pareto_summary(;N_pts = 1000, exclude_pts = 0, only_top = false)
 
 
     plot_list = []
@@ -294,14 +294,19 @@ function Build_pareto_summary(;N_pts = 1000, exclude_pts = 0)
 
                 # we could set a maximum and minimum quantile to plot: 
                 if exclude_pts > 0
-                    sample = sort(vec(sample))[(begin+exclude_pts):(end-3*exclude_pts)]
-                    new_sample = sort(vec(new_sample))[(begin+exclude_pts):(end-3*exclude_pts)]
+                    if only_top
+                        sample = sort(vec(sample))[(begin):(end-3*exclude_pts)]
+                        new_sample = sort(vec(new_sample))[(begin):(end-3*exclude_pts)]
+                    else
+                        sample = sort(vec(sample))[(begin+exclude_pts):(end-3*exclude_pts)]
+                        new_sample = sort(vec(new_sample))[(begin+exclude_pts):(end-3*exclude_pts)]
+                    end
                 end
 
+                x = Float64.(vec(log.(sample)))
+                y = Float64.(vec(log.(new_sample)))
 
-
-                p = StatsPlots.qqplot(Float64.(vec(log.(sample))), 
-                                    Float64.(vec(log.(new_sample))), 
+                p = StatsPlots.qqplot(x, y, 
                                     #   xlabel = x_lab,
                                     #   xmirror=true,
                                     #   ylabel = y_lab,
@@ -347,17 +352,27 @@ function Build_pareto_summary(;N_pts = 1000, exclude_pts = 0)
     lay = Plots.grid(n_row,n_col,heights=hei, widths = wid)
 
     p = Plots.plot(final_plots..., layout = lay, size=[1024,600])
-    if exclude_pts == 0
-        filename_to_save = "pareto_summary"
+    if only_top
+        filename_to_save = "pareto_summary_N$(N_pts)_excl$(exclude_pts)_toponly"
     else
-        filename_to_save = "pareto_summary_excl$exclude_pts"
+        filename_to_save = "pareto_summary_N$(N_pts)_excl$exclude_pts"
     end
     Plots.savefig(p,"univ/$filename_to_save.pdf")
     Plots.savefig(p,"png/univ/$filename_to_save.png")
 end
 
+A = (1000,10000)
+B = (0,1,2,5,10)
+C = (true,false)
+
+for a in A, b in B, c in C
+    print("####################### $a,$b,$c \n")
+    Build_pareto_summary(N_pts = a, exclude_pts = b, only_top = c)
+end
+
 Build_pareto_summary()
 Build_pareto_summary(exclude_pts=1)
+Build_pareto_summary(exclude_pts=2)
 Build_pareto_summary(exclude_pts=5)
 Build_pareto_summary(exclude_pts=10)
 
@@ -378,4 +393,3 @@ PlotAllUnivFiltered(filter="Pareto(1.5,1)")
 PlotAllUnivFiltered(filter="Pareto(2.5,1)")
 PlotAllUnivFiltered(filter="Weibull(0.75,1)")
 PlotAllUnivFiltered(filter="Weibull(1.5,1)")
-
