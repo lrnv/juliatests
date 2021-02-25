@@ -4,76 +4,79 @@ import Random, Plots, Optim
 setprecision(2048)
 qde = QuadDE(BigFloat)
 
-function compute_g(dist,n)
-    g = Array{BigFloat}(undef, 1,2n+1)
-    residuals_g = deepcopy(g)
-    for i in 0:(2n)
-        g[i+1],residuals_g[i+1] = qde(x -> (-x)^(i) * pdf(dist,x) * exp(-x), 0, +Inf)
-        print("g_{",i,"} = ",Float64(g[i+1]),", rez = ",Float64(residuals_g[i+1]),"\n")
-    end
-    return g
-end
-function MFK_Projection(g_integrals,n_gammas)
 
-    s = Array{BigFloat}(undef, 2n_gammas)
-    s[1] = -g_integrals[2]/g_integrals[1]
-    for k in 1:(length(s)-1)
-        s[k+1] = g_integrals[k+2] / factorial(big(k))
-        for i in 0:(k-1)
-            s[k+1] += s[i+1] * g_integrals[k-i+1] / factorial(big(k-i))
-        end
-        s[k+1] = - s[k+1]/g_integrals[1]
-    end
+######### All the following code has been moved to the package; 
 
-    S = Array{BigFloat}(undef, n_gammas,n_gammas)
-    for i in 0:(n_gammas-1)
-        for j in 0:(n_gammas-1)
-            S[i+1,j+1] = s[i+j+1]
-        end
-    end
+# function compute_g(dist,n)
+#     g = Array{BigFloat}(undef, 1,2n+1)
+#     residuals_g = deepcopy(g)
+#     for i in 0:(2n)
+#         g[i+1],residuals_g[i+1] = qde(x -> (-x)^(i) * pdf(dist,x) * exp(-x), 0, +Inf)
+#         print("g_{",i,"} = ",Float64(g[i+1]),", rez = ",Float64(residuals_g[i+1]),"\n")
+#     end
+#     return g
+# end
+# function MFK_Projection(g_integrals,n_gammas)
 
-    sol_b = Symmetric(S) \ (-s[(n_gammas+1):end])
-    b = deepcopy(sol_b)
-    append!(b,1)
-    b = reverse(b)
-    b_deriv = reverse(sol_b) .* (1:n_gammas)
+#     s = Array{BigFloat}(undef, 2n_gammas)
+#     s[1] = -g_integrals[2]/g_integrals[1]
+#     for k in 1:(length(s)-1)
+#         s[k+1] = g_integrals[k+2] / factorial(big(k))
+#         for i in 0:(k-1)
+#             s[k+1] += s[i+1] * g_integrals[k-i+1] / factorial(big(k-i))
+#         end
+#         s[k+1] = - s[k+1]/g_integrals[1]
+#     end
 
-    a = Array{BigFloat}(undef, n_gammas)
-    a[1] = s[1]
-    for k in 1:(n_gammas-1)
-        a[k+1] = s[k+1]
-        for i in 0:(k-1)
-            a[k+1] = a[k+1] + b[i+2] * s[k-i]
-        end
-    end
+#     S = Array{BigFloat}(undef, n_gammas,n_gammas)
+#     for i in 0:(n_gammas-1)
+#         for j in 0:(n_gammas-1)
+#             S[i+1,j+1] = s[i+j+1]
+#         end
+#     end
 
-    z = real.(roots(b, polish=true))
+#     sol_b = Symmetric(S) \ (-s[(n_gammas+1):end])
+#     b = deepcopy(sol_b)
+#     append!(b,1)
+#     b = reverse(b)
+#     b_deriv = reverse(sol_b) .* (1:n_gammas)
 
-    beta = -z .-1
-    alpha = deepcopy(beta)
+#     a = Array{BigFloat}(undef, n_gammas)
+#     a[1] = s[1]
+#     for k in 1:(n_gammas-1)
+#         a[k+1] = s[k+1]
+#         for i in 0:(k-1)
+#             a[k+1] = a[k+1] + b[i+2] * s[k-i]
+#         end
+#     end
 
-    for i in 1:length(alpha)
-        rez_num = 0
-        rez_denom = 0
-        for k in 1:length(a)
-            rez_num += a[k] * z[i]^(k-1)
-        end
-        for k in 1:length(b_deriv)
-            rez_denom += b_deriv[k] * z[i]^(k-1)
-        end
-        alpha[i] = rez_num/rez_denom
-    end
+#     z = real.(roots(b, polish=true))
 
-    return ThorinDistributions.UnivariateGammaConvolution(Float64.(alpha), Float64.(1 ./ beta))
-end
-function E_from_g(g)
-    # this function should compute laguerre coefficients from g. 
-    a = deepcopy(g)
-    for i in 1:length(a)
-        a[i] = sqrt(2) * sum(binomial(big(i-1),big(k))*big(2)^(k)/factorial(big(k)) * g[k+1] for k in 0:(i-1))
-    end
-    return a
-end
+#     beta = -z .-1
+#     alpha = deepcopy(beta)
+
+#     for i in 1:length(alpha)
+#         rez_num = 0
+#         rez_denom = 0
+#         for k in 1:length(a)
+#             rez_num += a[k] * z[i]^(k-1)
+#         end
+#         for k in 1:length(b_deriv)
+#             rez_denom += b_deriv[k] * z[i]^(k-1)
+#         end
+#         alpha[i] = rez_num/rez_denom
+#     end
+
+#     return ThorinDistributions.UnivariateGammaConvolution(Float64.(alpha), Float64.(1 ./ beta))
+# end
+# function E_from_g(g)
+#     # this function should compute laguerre coefficients from g. 
+#     a = deepcopy(g)
+#     for i in 1:length(a)
+#         a[i] = sqrt(2) * sum(binomial(big(i-1),big(k))*big(2)^(k)/factorial(big(k)) * g[k+1] for k in 0:(i-1))
+#     end
+#     return a
+# end
 function Fit_my_model(E,n_gammas;t1=10,t2=1200,tol=big(0.1^22))
     par = big.(Random.rand(2n_gammas) .- 1/2)
     obj = x -> ThorinDistributions.L2Objective(x,E)
@@ -114,14 +117,14 @@ max_n = maximum(different_ns)
 n_repeats=100 # number of samples for each KS distance
 N_simu = 100000 # Number of simulations for KS distances. 
 
-g = compute_g(My_Dist_BF,max_n)
-E = E_from_g(g)
+g = ThorinDistributions.compute_g(My_Dist_BF,max_n, qde)
+E = ThorinDistributions.E_from_g(g)
 
 models_furman = []
 models_me = []
 for n in different_ns
     print("Furman...\n")
-    append!(models_furman,[MFK_Projection(g[1:(2n+1)],n)])
+    append!(models_furman,[ThorinDistributions.MFK_Projection(g[1:(2n+1)],n)])
     print("Optim...\n")
     append!(models_me,[Fit_my_model(E[1:(2n+1)], n; t1 = 200*n)])
 end
@@ -178,8 +181,8 @@ CSV.write("furman/Furman_Ln_parameters_compare.csv",Tables.table(rez))
 Weib_BF = Distributions.Weibull(big(3)/big(2),big(1))
 Weib = Distributions.Weibull(3/2,1)
 
-g = compute_g(Weib_BF,max_n)
-E = E_from_g(g)
+g = ThorinDistributions.compute_g(Weib_BF,max_n)
+E = ThorinDistributions.E_from_g(g)
 
 models_weibull = []
 for n in different_ns
